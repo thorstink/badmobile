@@ -1,8 +1,8 @@
-#include <boost/lockfree/queue.hpp>
-#include <boost/fiber/all.hpp>
-#include <thread>
 #include <atomic>
+#include <boost/fiber/all.hpp>
+#include <boost/lockfree/queue.hpp>
 #include <iostream>
+#include <thread>
 
 using namespace boost::lockfree;
 using namespace boost::fibers;
@@ -10,21 +10,18 @@ using namespace boost::fibers;
 queue<int, fixed_sized<true>> q{10000};
 std::atomic<int> sum{0};
 
-void produce()
-{
+void produce() {
   for (int i = 1; i <= 10000; ++i)
     q.push(i);
 }
 
-void consume()
-{
+void consume() {
   int i;
   while (q.pop(i))
     sum += i;
 }
 
-int main()
-{
+int main() {
   boost::fibers::fiber f1{produce};
   boost::fibers::fiber f2{consume};
   boost::fibers::fiber f3{consume};
