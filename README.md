@@ -1,4 +1,4 @@
-# The Batmobile project
+# The Badmobile project
 
 ## Building
 ```bash
