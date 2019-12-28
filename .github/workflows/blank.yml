@@ -13,7 +13,7 @@ jobs:
             apt-get install software-properties-common -y
             add-apt-repository ppa:joseluisblancoc/gtsam-develop -y
             apt-get install libgtsam-dev -y
-      - checkout
+      # - checkout
 
 
         # steps:
