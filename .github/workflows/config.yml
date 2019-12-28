@@ -29,6 +29,6 @@ jobs:
         make
 
     - name: "runs tests and coverage"
-        run: |
-          ctest -VV
-          gcovr -r ../ .
+      run: |
+        ctest -VV
+        gcovr -r ../ .
