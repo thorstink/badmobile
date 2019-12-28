@@ -1,5 +1,7 @@
 # The Badmobile project
 
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/thorstink/badmobile/CI)
+
 ## Building
 ```bash
 mkdir build
