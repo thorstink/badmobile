@@ -2,12 +2,14 @@ cmake_minimum_required(VERSION 3.10)
 project(Badmobile VERSION 1.0.0)
 
 find_package(Eigen3 REQUIRED)
+find_package(GTSAM REQUIRED)
 find_package(Boost REQUIRED COMPONENTS fiber)
 
 include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
 set(dependencies
-${Boost_LIBRARIES}
+    ${Boost_LIBRARIES}
+    gtsam
 )
 
 
