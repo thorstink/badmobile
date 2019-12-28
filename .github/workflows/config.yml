@@ -12,7 +12,7 @@ jobs:
     - name: apt dependencies
       run: |
         sudo add-apt-repository ppa:joseluisblancoc/gtsam-develop -y
-        sudo apt-get install -y lcov libboost-all-dev libeigen3-dev libgtsam-dev
+        sudo apt-get install -y lcov gcovr libboost-all-dev libeigen3-dev libgtsam-dev
     
     - name: repo dependencies
       run: |
