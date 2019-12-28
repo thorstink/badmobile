@@ -1,5 +1,6 @@
 # The Badmobile project
 
+<!-- https://shields.io/ -->
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/thorstink/badmobile/CI)
 
 ## Building
