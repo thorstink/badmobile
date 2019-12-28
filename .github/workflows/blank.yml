@@ -1,19 +1,17 @@
-version: 2
 name: CI
 
 on: [push]
 
 jobs:
-  full-u18.04-bionic:
-    docker:
-      - image: mrpt/mrpt-build-env:full-bionic
+  build:
+    runs-on: ubuntu-latest
+
     steps:
-      - run:
-          name: "Install dependencies"
-          command: |
-            apt-get update
-            apt-get install software-properties-common -y
-            add-apt-repository ppa:joseluisblancoc/mrpt -y
-            add-apt-repository ppa:joseluisblancoc/gtsam-develop -y
-            apt-get install libmrpt-dev -y
-            apt-get install libgtsam-dev -y
+    - uses: actions/checkout@v1
+
+    - name: make
+      run: make
+
+    - name: dependencies
+      run: |
+        sudo apt-get install -y libboost-all-dev libeigen3-dev
