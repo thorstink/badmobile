@@ -1,17 +1,19 @@
+version: 2
 name: CI
 
 on: [push]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  full-u18.04-bionic:
+    docker:
+      - image: mrpt/mrpt-build-env:full-bionic
     steps:
-      steps:
-        - uses: actions/checkout@v1
-        - name: configure
-          run: mkdir build && cd build && cmake -DCMAKE_CXX_FLAGS="-Werror" ..
-        - name: build
-          run: cmake --build build
-        - name: test
-          run: cd build && ctest
-      
+      - run:
+          name: "Install dependencies"
+          command: |
+            apt-get update
+            apt-get install software-properties-common -y
+            add-apt-repository ppa:joseluisblancoc/mrpt -y
+            add-apt-repository ppa:joseluisblancoc/gtsam-develop -y
+            apt-get install libmrpt-dev -y
+            apt-get install libgtsam-dev -y
