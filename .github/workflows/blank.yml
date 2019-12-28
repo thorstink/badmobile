@@ -9,9 +9,6 @@ jobs:
     steps:
     - uses: actions/checkout@v1
 
-    - name: make
-      run: make
-
     - name: dependencies
       run: |
         sudo apt-get install -y libboost-all-dev libeigen3-dev
