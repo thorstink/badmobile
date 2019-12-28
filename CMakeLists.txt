@@ -10,19 +10,25 @@ set(dependencies
 ${Boost_LIBRARIES}
 )
 
-# if(BUILD_TESTING)
-#     find_package(Catch2 REQUIRED)
-#     include_directories(src)
-#     set(TEST_DIR test)
-#     set(TEST_SOURCES
-#         ${TEST_DIR}/base.cc
-#         ${TEST_DIR}/state.cc
-#     )
+
+if(BUILD_TESTING)
+    # Enable testing for the project
+    enable_testing()
+    # Get Catch
+    find_package(Catch2 REQUIRED)
+    # because headers are somewhere else
+    include_directories(src)
+    # concat testfiles 
+    set(TEST_DIR test)
+    set(TEST_SOURCES
+        ${TEST_DIR}/base.cc
+        ${TEST_DIR}/state.cc
+    )
     
-#     add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
-#     target_link_libraries(${PROJECT_NAME}_test ${dependencies})
-#     add_test(test ${PROJECT_NAME}_test)
-# endif()
+    add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
+    target_link_libraries(${PROJECT_NAME}_test ${dependencies})
+    add_test(${PROJECT_NAME}_test ${PROJECT_NAME}_test)
+endif()
 
 #app
 add_executable(main src/main.cc)
