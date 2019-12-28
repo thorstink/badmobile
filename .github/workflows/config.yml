@@ -25,6 +25,6 @@ jobs:
       run: |
         mkdir build 
         cd build
-        cmake .. 
+        cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON  .. 
         make
         ctest
