@@ -11,6 +11,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
 
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;")
+include(code-coverage)
+add_code_coverage() # Adds instrumentation to all targets
+
 find_package(Eigen3 REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(Boost REQUIRED COMPONENTS fiber)
@@ -21,7 +25,6 @@ set(dependencies
     ${Boost_LIBRARIES}
     gtsam
 )
-
 
 if(BUILD_TESTING)
     # Enable testing for the project
@@ -45,3 +48,5 @@ endif()
 #app
 add_executable(main src/main.cc)
 target_link_libraries(main ${dependencies})
+
+# target_code_coverage(main)

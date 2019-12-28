@@ -9,3 +9,11 @@ TEST_CASE("And there was state") {
   auto state = State{pose.translation()};
   REQUIRE(state.position[0] == 0.0);
 }
+
+TEST_CASE("And state was used") {
+  auto pose = gtsam::Pose3();
+  auto state = State{pose.translation()};
+  auto new_state = update(state);
+
+  REQUIRE(new_state.position.isApprox(state.position));
+}

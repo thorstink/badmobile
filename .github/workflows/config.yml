@@ -12,7 +12,7 @@ jobs:
     - name: apt dependencies
       run: |
         sudo add-apt-repository ppa:joseluisblancoc/gtsam-develop -y
-        sudo apt-get install -y libboost-all-dev libeigen3-dev libgtsam-dev
+        sudo apt-get install -y lcov libboost-all-dev libeigen3-dev libgtsam-dev
     
     - name: repo dependencies
       run: |
@@ -27,4 +27,8 @@ jobs:
         cd build
         cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON  .. 
         make
-        ctest
+
+    - name: "runs tests and coverage"
+        run: |
+        ctest -VV
+        gcovr -r ../ .

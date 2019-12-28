@@ -3,7 +3,9 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "command": "sh",
-    "args": ["-c"],
+    "args": [
+        "-c"
+    ],
     "options": {
         "cwd": "${workspaceRoot}/build"
     },
@@ -11,7 +13,7 @@
         {
             "label": "cmake",
             "args": [
-                "cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON  .."
+                "cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCODE_COVERAGE=ON  .."
             ]
         },
         {
@@ -25,9 +27,16 @@
         {
             "label": "test",
             "args": [
-                "ctest -j 8"
+                "ctest -VV -j8"
             ],
             "group": "test",
+            "problemMatcher": []
+        },
+        {
+            "label": "generate coverage",
+            "args": [
+                "gcovr -r ../ . --html --html-details -o coverage.html"
+            ],
             "problemMatcher": []
         }
     ]
