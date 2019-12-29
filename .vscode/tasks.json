@@ -17,7 +17,7 @@
             ]
         },
         {
-            "label": "make",
+            "label": "make application",
             "args": [
                 "make -j 8"
             ],
@@ -38,6 +38,13 @@
                 "gcovr -r ../ . --html --html-details -o coverage.html"
             ],
             "problemMatcher": []
+        },
+        {
+            "label": "build ui",
+            "args": [
+                "cd ../ui && elm make src/Main.elm --output=badmobile.js"
+            ],
+            "group": "build"
         }
     ]
 }

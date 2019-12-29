@@ -4,6 +4,13 @@ on: [push]
 
 jobs:
   build:
+    steps:
+      - uses: jorelali/setup-elm@v1
+        with:
+          elm-version: 0.19.1
+      - run:  |
+        cd ui && elm make src/Main.elm --output=badmobile.js
+  build:
     runs-on: ubuntu-latest
 
     steps:
