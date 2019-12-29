@@ -14,7 +14,8 @@
             "label": "cmake",
             "args": [
                 "cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCODE_COVERAGE=ON  .."
-            ]
+            ],
+            "problemMatcher": []
         },
         {
             "label": "make application",
@@ -44,7 +45,8 @@
             "args": [
                 "cd ../ui && elm make src/Main.elm --output=badmobile.js"
             ],
-            "group": "build"
+            "group": "build",
+            "problemMatcher": []
         },
         {
             "label": "open ui",
@@ -52,6 +54,12 @@
             "args": [
                 "../ui/index.html"
             ],
+            "problemMatcher": []
+        },
+        {
+            "label": "clean",
+            "type": "shell",
+            "command": "rm -f ../build/* && rm -f ../ui/badmobile.js && rm -r ../ui/elm-stuff",
             "problemMatcher": []
         }
     ]
