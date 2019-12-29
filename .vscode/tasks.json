@@ -45,6 +45,14 @@
                 "cd ../ui && elm make src/Main.elm --output=badmobile.js"
             ],
             "group": "build"
+        },
+        {
+            "label": "open ui",
+            "command": "google-chrome",
+            "args": [
+                "../ui/index.html"
+            ],
+            "problemMatcher": []
         }
     ]
 }
