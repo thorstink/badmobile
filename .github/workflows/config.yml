@@ -27,8 +27,5 @@ jobs:
         cd build
         cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCODE_COVERAGE=ON  .. 
         make
-
-    - name: "runs tests and coverage"
-      run: |
         ctest -VV
         gcovr -r ../ .
