@@ -9,6 +9,7 @@ jobs:
       - uses: jorelali/setup-elm@v1
         with:
           elm-version: 0.19.1
+      - uses: actions/checkout@v1
       - run: |
           cd ui 
           elm make src/Main.elm --output=badmobile.js
