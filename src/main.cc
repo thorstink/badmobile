@@ -17,11 +17,11 @@ struct CmdVelHandler : WebSocket::Handler {
   std::set<WebSocket *> _cons;
   void onConnect(WebSocket *con) override {
     _cons.insert(con);
-    send(con->credentials()->username + "ws2 someone has joined");
+    send(con->credentials()->username + "someone has joined");
   }
   void onDisconnect(WebSocket *con) override {
     _cons.erase(con);
-    send(con->credentials()->username + "ws2 someone has left");
+    send(con->credentials()->username + "someone has left");
   }
 
   void onData(WebSocket *con, const char *data) override {
@@ -65,6 +65,6 @@ int main() {
   // std::cout << sum << '\n';
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
-  server.serve("interface", 2222);
+  server.serve("ui", 2222);
   return 0;
 }

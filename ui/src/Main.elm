@@ -1,98 +1,87 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Html exposing (Html, div, li, p, text, ul)
-import Keyboard exposing (Key(..), RawKey)
+import Keyboard exposing (Key(..))
 import Keyboard.Arrows
 import Style
+import Teleop exposing (..)
 
-type alias Twist = {  
-                      linear_x : Float
-                    , angular_z : Float 
-                    }
 
-type Msg
-  = KeyboardMsg Keyboard.Msg
+-- websocket example from https://stackoverflow.com/questions/52010340/how-to-get-websockets-working-in-elm-0-19
+import Html.Attributes as HA
+import Html.Events as HE
+import Json.Encode as JE
 
-type Throttle = IncreaseLinear | DecreaseLinear | IncreaseAngular | DecreaseAngular | Stop | Noop
-type Action = Publish | DontPublish
+-- JavaScript usage: app.ports.websocketIn.send(response);
+port websocketIn : (String -> msg) -> Sub msg
+-- JavaScript usage: app.ports.websocketOut.subscribe(handler);
+port websocketOut : String -> Cmd msg
 
-{-| We don't need any other info in the model, since we can get everything we
-need using the helpers right in the `view`!
-This way we always have a single source of truth, and we don't need to remember
-to do anything special in the update.
--}
+{- MODEL -}
+
 type alias Model =
     {
       pressedKeys : List Key
     , twist : Twist
+    , responses : List String
+    , input : String
     }
 
-
-keyMapper key =
-  -- we use R and F to respectfully increase and decrease linear velocity
-  -- we use T and G to respectfully increase and decrease angular velocity
-  case key of
-    Character "R" ->
-      IncreaseLinear
-    Character "F" ->
-      DecreaseLinear 
-    Character "T" ->
-      IncreaseAngular
-    Character "G" ->
-      DecreaseAngular
-    Character "W" ->
-      Noop
-    Character "X" ->
-      Noop 
-    Character "A" ->
-      Noop
-    Character "D" ->
-      Noop
-    _ ->
-      Stop
-
-throttleMapper twist throttle = 
-  case throttle of 
-    IncreaseLinear ->
-      ({ twist | linear_x = twist.linear_x + 0.02}, DontPublish)
-    DecreaseLinear ->
-      ({ twist | linear_x = twist.linear_x - 0.02}, DontPublish)
-    IncreaseAngular ->
-      ({ twist | angular_z = twist.angular_z + 0.02}, DontPublish)
-    DecreaseAngular ->
-      ({ twist | angular_z = twist.angular_z - 0.02}, DontPublish)
-    Stop ->
-      (Twist 0.0 0.0, Publish)
-    Noop ->
-      (twist, Publish)
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { 
         pressedKeys = []
       , twist = Twist 1.0 1.0
+      , responses = []
+      , input = ""
       }
     , Cmd.none
     )
+
+{- UPDATE -}
+
+type Msg
+  = KeyboardMsg Keyboard.Msg 
+    | Change String
+    | Submit String
+    | WebsocketIn String
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         KeyboardMsg keyMsg ->
-            ( { model
-                | pressedKeys = Keyboard.update keyMsg model.pressedKeys,
-                  twist = 
-                    (
-                      case List.head (List.map (\key -> throttleMapper model.twist (keyMapper key)) model.pressedKeys) of
-                        Just (cmd, action)  -> cmd 
-                        _                   -> model.twist
-                    )
-              }
-            , Cmd.none
-            )
+          ( { model
+              | pressedKeys = Keyboard.update keyMsg model.pressedKeys,
+                twist = 
+                  (
+                    case List.head (List.map (\key -> throttleMapper model.twist (keyMapper key)) model.pressedKeys) of
+                      Just (cmd, action)  -> cmd 
+                      _                   -> model.twist
+                  )
+            }
+          , Cmd.none
+          )
+        Change input ->
+          ( { model | input = input }
+          , Cmd.none
+          )
+        Submit value ->
+          ( model
+          , websocketOut value
+          )
+        WebsocketIn value ->
+          ( { model | responses = value :: model.responses }
+          , Cmd.none
+          )
 
-view : Model -> Html msg
+{- VIEW -}
+
+fli : String -> Html Msg
+fli string = Html.li [] [Html.text string]
+
+view : Model -> Html Msg
 view model =
     let
         shiftPressed =
@@ -106,7 +95,6 @@ view model =
 
     in
 
-
     div Style.container
         [ text ("Shift: " ++ Debug.toString shiftPressed)
         , p [] [ text ("Arrows: " ++ Debug.toString arrows) ]
@@ -115,12 +103,18 @@ view model =
         , p [] [ text "Currently pressed down:" ]
         , ul []
             (List.map (\key -> li [] [ text (Debug.toString key) ]) model.pressedKeys)
+        , Html.form [HE.onSubmit (Submit model.input)]
+          [ Html.input [HA.placeholder "Enter some text.", HA.value model.input, HE.onInput Change] []
+          , model.responses |> List.map fli |> Html.ol []
+          ]
         ]
 
 
+{- SUBSCRIPTIONS -}
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.map KeyboardMsg Keyboard.subscriptions
+    Sub.batch [Sub.map KeyboardMsg Keyboard.subscriptions, websocketIn WebsocketIn]
 
 
 main : Program () Model Msg
