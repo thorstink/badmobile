@@ -6,13 +6,16 @@ import Keyboard exposing (Key(..), RawKey)
 import Keyboard.Arrows
 import Style
 
-type Msg
-  = KeyboardMsg Keyboard.Msg
-
 type alias Twist = {  
                       linear_x : Float
                     , angular_z : Float 
                     }
+
+type Msg
+  = KeyboardMsg Keyboard.Msg
+
+type Throttle = IncreaseLinear | DecreaseLinear | IncreaseAngular | DecreaseAngular | Stop | Noop
+type Action = Publish | DontPublish
 
 {-| We don't need any other info in the model, since we can get everything we
 need using the helpers right in the `view`!
@@ -24,29 +27,6 @@ type alias Model =
       pressedKeys : List Key
     , twist : Twist
     }
-
-
-init : () -> ( Model, Cmd Msg )
-init _ =
-    ( { 
-        pressedKeys = []
-      , twist = Twist 1.0 1.0
-      }
-    , Cmd.none
-    )
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        KeyboardMsg keyMsg ->
-            ( { model
-                | pressedKeys = Keyboard.update keyMsg model.pressedKeys
-              }
-            , Cmd.none
-            )
-
-type Throttle = IncreaseLinear | DecreaseLinear | IncreaseAngular | DecreaseAngular | Stop | Noop
 
 
 keyMapper key =
@@ -75,18 +55,42 @@ keyMapper key =
 throttleMapper twist throttle = 
   case throttle of 
     IncreaseLinear ->
-      Twist (1.1*twist.linear_x) twist.angular_z
+      ({ twist | linear_x = twist.linear_x + 0.02}, DontPublish)
     DecreaseLinear ->
-      Twist (0.9*twist.linear_x) twist.angular_z
+      ({ twist | linear_x = twist.linear_x - 0.02}, DontPublish)
     IncreaseAngular ->
-      Twist twist.linear_x (1.1*twist.angular_z)
+      ({ twist | angular_z = twist.angular_z + 0.02}, DontPublish)
     DecreaseAngular ->
-      Twist twist.linear_x (0.9*twist.angular_z)
+      ({ twist | angular_z = twist.angular_z - 0.02}, DontPublish)
     Stop ->
-      Twist 0.0 0.0
+      (Twist 0.0 0.0, Publish)
     Noop ->
-      twist
+      (twist, Publish)
 
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { 
+        pressedKeys = []
+      , twist = Twist 1.0 1.0
+      }
+    , Cmd.none
+    )
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        KeyboardMsg keyMsg ->
+            ( { model
+                | pressedKeys = Keyboard.update keyMsg model.pressedKeys,
+                  twist = 
+                    (
+                      case List.head (List.map (\key -> throttleMapper model.twist (keyMapper key)) model.pressedKeys) of
+                        Just (cmd, action)  -> cmd 
+                        _                   -> model.twist
+                    )
+              }
+            , Cmd.none
+            )
 
 view : Model -> Html msg
 view model =
@@ -100,14 +104,14 @@ view model =
         wasd =
             Keyboard.Arrows.wasd model.pressedKeys
 
-        cmdVel = List.map (\key -> throttleMapper model.twist (keyMapper key)) model.pressedKeys 
-
     in
+
+
     div Style.container
         [ text ("Shift: " ++ Debug.toString shiftPressed)
         , p [] [ text ("Arrows: " ++ Debug.toString arrows) ]
         , p [] [ text ("WASD: " ++ Debug.toString wasd) ]
-        , p [] [ text ("cmd_vel: " ++ Debug.toString cmdVel) ]
+        , p [] [ text ("cmd_vel: " ++ Debug.toString model.twist) ]
         , p [] [ text "Currently pressed down:" ]
         , ul []
             (List.map (\key -> li [] [ text (Debug.toString key) ]) model.pressedKeys)

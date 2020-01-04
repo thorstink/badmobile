@@ -18,11 +18,13 @@ add_code_coverage() # Adds instrumentation to all targets
 find_package(Eigen3 REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(Boost REQUIRED COMPONENTS fiber)
+find_package(Seasocks REQUIRED)
 
-include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS})
 
 set(dependencies
     ${Boost_LIBRARIES}
+    seasocks
     gtsam
 )
 

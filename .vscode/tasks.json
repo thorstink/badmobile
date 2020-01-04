@@ -1,66 +1,66 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "2.0.0",
-    "command": "sh",
-    "args": [
-        "-c"
-    ],
-    "options": {
-        "cwd": "${workspaceRoot}/build"
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "command": "sh",
+  "args": [
+    "-c"
+  ],
+  "options": {
+    "cwd": "${workspaceRoot}/build"
+  },
+  "tasks": [
+    {
+      "label": "cmake",
+      "args": [
+        "cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCODE_COVERAGE=ON  .."
+      ],
+      "problemMatcher": []
     },
-    "tasks": [
-        {
-            "label": "cmake",
-            "args": [
-                "cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCODE_COVERAGE=ON  .."
-            ],
-            "problemMatcher": []
-        },
-        {
-            "label": "make application",
-            "args": [
-                "make -j 8"
-            ],
-            "group": "build",
-            "problemMatcher": []
-        },
-        {
-            "label": "test",
-            "args": [
-                "ctest -VV -j8"
-            ],
-            "group": "test",
-            "problemMatcher": []
-        },
-        {
-            "label": "generate coverage",
-            "args": [
-                "gcovr -r ../ . --html --html-details -o coverage.html"
-            ],
-            "problemMatcher": []
-        },
-        {
-            "label": "build ui",
-            "args": [
-                "cd ../ui && elm make src/Main.elm --output=badmobile.js"
-            ],
-            "group": "build",
-            "problemMatcher": []
-        },
-        {
-            "label": "open ui",
-            "command": "google-chrome",
-            "args": [
-                "../ui/index.html"
-            ],
-            "problemMatcher": []
-        },
-        {
-            "label": "clean",
-            "type": "shell",
-            "command": "rm -f ../build/* && rm -f ../ui/badmobile.js && rm -r ../ui/elm-stuff",
-            "problemMatcher": []
-        }
-    ]
+    {
+      "label": "make application",
+      "args": [
+        "make -j 8"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "test",
+      "args": [
+        "ctest -VV -j8"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "generate coverage",
+      "args": [
+        "gcovr -r ../ . --html --html-details -o coverage.html"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "build ui",
+      "args": [
+        "cd ../ui && elm make src/Main.elm --output=badmobile.js"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "open ui",
+      "command": "firefox",
+      "args": [
+        "../ui/index.html"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "clean",
+      "type": "shell",
+      "command": "rm -f ../build/* && rm -f ../ui/badmobile.js && rm -r ../ui/elm-stuff",
+      "problemMatcher": []
+    }
+  ]
 }
