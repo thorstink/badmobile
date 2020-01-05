@@ -48,7 +48,14 @@ if(BUILD_TESTING)
 endif()
 
 #app
-add_executable(main src/main.cc)
-target_link_libraries(main ${dependencies})
+add_executable(${PROJECT_NAME} src/main.cc)
+target_link_libraries(${PROJECT_NAME} ${dependencies})
 
 # target_code_coverage(main)
+set(ui_files
+  ${CMAKE_CURRENT_SOURCE_DIR}/ui/index.html
+  ${CMAKE_CURRENT_SOURCE_DIR}/ui/badmobile.js
+)
+
+install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install)

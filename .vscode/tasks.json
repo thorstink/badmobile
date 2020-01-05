@@ -49,6 +49,13 @@
       "problemMatcher": []
     },
     {
+      "label": "install application",
+      "args": [
+        "make install"
+      ],
+      "problemMatcher": []
+    },
+    {
       "label": "open ui",
       "command": "firefox",
       "args": [
