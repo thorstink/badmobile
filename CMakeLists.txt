@@ -57,5 +57,6 @@ set(ui_files
   ${CMAKE_CURRENT_SOURCE_DIR}/ui/badmobile.js
 )
 
+# install app
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install)
