@@ -116,7 +116,6 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch [Sub.map KeyboardMsg Keyboard.subscriptions, websocketIn WebsocketIn]
 
-
 main : Program () Model Msg
 main =
     Browser.element

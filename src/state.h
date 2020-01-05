@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 
 struct State {
+  Eigen::Vector2d cmd_vel;
   Eigen::Vector3d position;
 };
 

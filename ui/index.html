@@ -19,11 +19,10 @@
     var app = Elm.Main.init({
       node: document.getElementById('elm')
     });
-
-    var ws = new WebSocket("wss://echo.websocket.org");
+    var ws = new WebSocket('ws://localhost:2222/cmd');
     ws.onmessage = function (message) {
       console.log(message);
-      app.ports.websocketIn.send(JSON.stringify({ data: message.data, timeStamp: message.timeStamp }));
+      app.ports.websocketIn.send(message.data);
     };
     app.ports.websocketOut.subscribe(function (msg) { ws.send(msg); });
   </script>

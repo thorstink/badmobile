@@ -25,7 +25,7 @@ struct CmdVelHandler : WebSocket::Handler {
   }
 
   void onData(WebSocket *con, const char *data) override {
-    // send(con->credentials()->username + "cmd: " + data);
+    send(con->credentials()->username + "cmd: " + data);
     std::cout << con->credentials()->username + "cmd: " + data << std::endl;
   }
 
@@ -60,9 +60,6 @@ int main() {
   f1.join();
   f2.join();
   f3.join();
-
-  // consume();
-  // std::cout << sum << '\n';
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
   server.serve("ui", 2222);
