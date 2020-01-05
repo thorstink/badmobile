@@ -46,7 +46,6 @@ init _ =
 type Msg
   = KeyboardMsg Keyboard.Msg | WebsocketIn String 
 
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -68,16 +67,13 @@ update msg model =
 
 {- VIEW -}
 
-fli : String -> Html Msg
-fli string = Html.li [] [Html.text string]
-
 view : Model -> Html Msg
 view model =
     div Style.container
         [ p [] [ text ("cmd_vel: " ++ Debug.toString model.twist) ]
         , p [] [ text "Currently pressed down:" ]
         , model.pressedKeys |> List.map (\key -> li [] [ text (Debug.toString key)]) |> Html.ul []
-        , model.responses |> List.map fli |> Html.ol []
+        , model.responses |> List.map (\string-> Html.li [] [Html.text string]) |> Html.ol []
         ]
 
 {- SUBSCRIPTIONS -}
