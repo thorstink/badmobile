@@ -49,10 +49,11 @@
       "problemMatcher": []
     },
     {
-      "label": "install application",
+      "label": "build and install application",
       "args": [
         "make install"
       ],
+      "group": "build",
       "problemMatcher": []
     },
     {
