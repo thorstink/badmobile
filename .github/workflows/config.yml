@@ -27,9 +27,9 @@ jobs:
     
     - name: repo dependencies
       run: |
-        git clone https://github.com/catchorg/Catch2.git
-        cd Catch2 && mkdir build && cd build
-        cmake .. -DBUILD_TESTING=OFF
+        git clone https://github.com/mattgodbolt/seasocks.git
+        cd seasocks && mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug -DUNITTESTS=OFF ..
         sudo make install
     
     - name: "build project"
