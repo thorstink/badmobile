@@ -5,6 +5,8 @@ import Html exposing (Html, div, li, p, text, ul)
 import Keyboard exposing (Key(..))
 import Style
 import Teleop exposing (..)
+import Json.Decode exposing (..)
+import Dict
 
 -- websocket example from https://stackoverflow.com/questions/52010340/how-to-get-websockets-working-in-elm-0-19
 -- JavaScript usage: app.ports.websocketIn.send(response);
@@ -72,13 +74,29 @@ update msg model =
 
 {- VIEW -}
 
+type alias User = { pi : Float }
+userDecoder : Json.Decode.Decoder User
+userDecoder =
+    Json.Decode.map User (Json.Decode.at [ "pi" ] Json.Decode.float)
+
 view : Model -> Html Msg
 view model =
+    let      
+      q = case (List.head model.responses) of
+            Just cmd  -> (
+              case (Json.Decode.decodeString userDecoder cmd) of
+                Ok value -> value.pi |> String.fromFloat
+                _ -> "not a valid json"
+              )
+            _     -> "no json"
+      lin_x = model.twist.linear_x |> String.fromFloat
+      ang_z = model.twist.angular_z |> String.fromFloat
+    in
     div Style.container
-        [ p [] [ text ("cmd_vel: " ++ Debug.toString model.twist) ]
+        [ p [] [ text ("cmd_vel: linear-x: " ++ lin_x ++ ", angular-z: " ++ ang_z) ]
         , p [] [ text "Currently pressed down:" ]
         , model.pressedKeys |> List.map (\key -> li [] [ text (Debug.toString key)]) |> Html.ul []
-        , model.responses |> List.map (\string-> Html.li [] [Html.text string]) |> Html.ol []
+        , model.responses |> List.map (\string-> Html.li [] [ q |> Html.text ]) |> Html.ol []
         ]
 
 {- SUBSCRIPTIONS -}

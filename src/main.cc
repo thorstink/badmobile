@@ -1,3 +1,4 @@
+#include "nlohmann/json.hpp"
 #include <atomic>
 #include <boost/fiber/all.hpp>
 #include <boost/lockfree/queue.hpp>
@@ -12,16 +13,17 @@
 using namespace boost::lockfree;
 using namespace boost::fibers;
 using namespace seasocks;
+using json = nlohmann::json;
 
 struct CmdVelHandler : WebSocket::Handler {
   std::set<WebSocket *> _cons;
   void onConnect(WebSocket *con) override {
     _cons.insert(con);
-    send(con->credentials()->username + "someone has joined");
+    // send(con->credentials()->username + "someone has joined");
   }
   void onDisconnect(WebSocket *con) override {
     _cons.erase(con);
-    send(con->credentials()->username + "someone has left");
+    // send(con->credentials()->username + "someone has left");
   }
 
   void onData(WebSocket *con, const char *data) override {
@@ -29,9 +31,11 @@ struct CmdVelHandler : WebSocket::Handler {
     std::cout << con->credentials()->username + "cmd: " + data << std::endl;
   }
 
-  void send(const std::string &msg) {
+  void send(const std::string & /*msg*/) {
     for (auto *con : _cons) {
-      con->send(msg);
+      json j = {{"pi", 3.141}};
+      con->send(j.dump());
+      std::cout << "send: " << j.dump() << std::endl;
     }
   }
 };
