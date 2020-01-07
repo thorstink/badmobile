@@ -3,15 +3,10 @@ port module Main exposing (main)
 import Browser
 import Html exposing (Html, div, li, p, text, ul)
 import Keyboard exposing (Key(..))
-import Keyboard.Arrows
 import Style
 import Teleop exposing (..)
 
 -- websocket example from https://stackoverflow.com/questions/52010340/how-to-get-websockets-working-in-elm-0-19
-import Html.Attributes as HA
-import Html.Events as HE
-import Json.Encode as JE
-
 -- JavaScript usage: app.ports.websocketIn.send(response);
 port websocketIn : (String -> msg) -> Sub msg
 -- JavaScript usage: app.ports.websocketOut.subscribe(handler);
@@ -51,14 +46,24 @@ update msg model =
     case msg of
         KeyboardMsg keyMsg ->
           ( 
-            { model
-              | pressedKeys = Keyboard.update keyMsg model.pressedKeys,
+            let
+              pressedKeys = Keyboard.update keyMsg model.pressedKeys
+            in
+            { 
+              model
+              | pressedKeys = pressedKeys,
                 twist = 
-                    case List.head (List.map (\key -> throttleMapper model.twist (keyMapper key)) model.pressedKeys) of
-                      Just (cmd, action)  -> cmd
-                      _                   -> model.twist
+                    case List.head (List.map (\key -> throttleMapper model.twist (keyMapper key)) pressedKeys) of
+                      Just (cmd, _)  -> cmd
+                      _              -> model.twist
             }
-          , websocketOut (Debug.toString model.twist)
+            , 
+            let 
+              twist = case List.head (List.map (\key -> throttleMapper model.twist (keyMapper key)) (Keyboard.update keyMsg model.pressedKeys)) of
+                                    Just (cmd, _)  -> cmd
+                                    _              -> model.twist
+            in
+              websocketOut (Debug.toString twist)
           )
         WebsocketIn value ->
           ( { model | responses = value :: model.responses }

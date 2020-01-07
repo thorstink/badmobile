@@ -20,7 +20,7 @@ find_package(GTSAM REQUIRED)
 find_package(Boost REQUIRED COMPONENTS fiber)
 find_package(Seasocks REQUIRED)
 
-include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} lib)
 
 set(dependencies
     ${Boost_LIBRARIES}
@@ -31,8 +31,6 @@ set(dependencies
 if(BUILD_TESTING)
     # Enable testing for the project
     enable_testing()
-    # Get Catch
-    find_package(Catch2 REQUIRED)
     # because headers are somewhere else
     include_directories(src)
     # concat testfiles 
