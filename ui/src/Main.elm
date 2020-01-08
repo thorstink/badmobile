@@ -6,13 +6,19 @@ import Keyboard exposing (Key(..))
 import Style
 import Teleop exposing (..)
 import Json.Decode exposing (..)
-import Dict
+import Json.Encode as E
 
--- websocket example from https://stackoverflow.com/questions/52010340/how-to-get-websockets-working-in-elm-0-19
--- JavaScript usage: app.ports.websocketIn.send(response);
 port websocketIn : (String -> msg) -> Sub msg
--- JavaScript usage: app.ports.websocketOut.subscribe(handler);
 port websocketOut : String -> Cmd msg
+
+-- ENCODE
+
+encode : Twist -> E.Value
+encode twist =
+  E.object
+    [ ("linear_x", E.float twist.linear_x)
+    , ("angular_z", E.float twist.angular_z)
+    ]
 
 {- MODEL -}
 
@@ -21,7 +27,7 @@ type alias Model =
       pressedKeys : List Key
     , twist : Twist
     , action : Action
-    , responses : List String
+    , responses : String
     , input : String
     }
 
@@ -32,7 +38,7 @@ init _ =
         pressedKeys = []
       , twist = Twist 1.0 1.0
       , action = DontPublish
-      , responses = []
+      , responses = ""
       , input = ""
       }
     , Cmd.none
@@ -65,38 +71,36 @@ update msg model =
                                     Just (cmd, _)  -> cmd
                                     _              -> model.twist
             in
-              websocketOut (Debug.toString twist)
+              -- websocketOut (Debug.toString twist)
+              websocketOut (E.encode 0 (encode twist))
           )
         WebsocketIn value ->
-          ( { model | responses = value :: model.responses }
+          ( { model | responses = value }
           , Cmd.none
           )
 
 {- VIEW -}
 
-type alias User = { pi : Float }
+type alias User = { received : Float }
 userDecoder : Json.Decode.Decoder User
 userDecoder =
-    Json.Decode.map User (Json.Decode.at [ "pi" ] Json.Decode.float)
+    Json.Decode.map User (Json.Decode.at [ "received" ] Json.Decode.float)
 
 view : Model -> Html Msg
 view model =
     let      
-      q = case (List.head model.responses) of
-            Just cmd  -> (
-              case (Json.Decode.decodeString userDecoder cmd) of
-                Ok value -> value.pi |> String.fromFloat
+      reply = case (Json.Decode.decodeString userDecoder  model.responses) of
+                Ok value -> value.received |> String.fromFloat
                 _ -> "not a valid json"
-              )
-            _     -> "no json"
+
       lin_x = model.twist.linear_x |> String.fromFloat
       ang_z = model.twist.angular_z |> String.fromFloat
     in
     div Style.container
         [ p [] [ text ("cmd_vel: linear-x: " ++ lin_x ++ ", angular-z: " ++ ang_z) ]
         , p [] [ text "Currently pressed down:" ]
-        , model.pressedKeys |> List.map (\key -> li [] [ text (Debug.toString key)]) |> Html.ul []
-        , model.responses |> List.map (\string-> Html.li [] [ q |> Html.text ]) |> Html.ol []
+        -- , model.pressedKeys |> List.map (\key -> li [] [ text (Debug.toString key)]) |> Html.ul []
+        , p [] [ text ("reply: "++reply) ]
         ]
 
 {- SUBSCRIPTIONS -}

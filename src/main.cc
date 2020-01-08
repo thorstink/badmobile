@@ -23,17 +23,18 @@ struct CmdVelHandler : WebSocket::Handler {
   }
   void onDisconnect(WebSocket *con) override {
     _cons.erase(con);
-    // send(con->credentials()->username + "someone has left");
+    // std::cout << con->credentials()->username + "has left" << std::endl;
   }
 
-  void onData(WebSocket *con, const char *data) override {
-    send(con->credentials()->username + "cmd: " + data);
-    std::cout << con->credentials()->username + "cmd: " + data << std::endl;
+  void onData(WebSocket * /*con*/, const char *data) override {
+    json j(data);
+    send(j);
+    std::cout << "received: " << j.dump() << std::endl;
   }
 
-  void send(const std::string & /*msg*/) {
+  void send(const json & /*j*/) {
     for (auto *con : _cons) {
-      json j = {{"pi", 3.141}};
+      json j = {{"received", 1.0}};
       con->send(j.dump());
       std::cout << "send: " << j.dump() << std::endl;
     }
