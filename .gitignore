@@ -12,5 +12,5 @@ _deps
 build
 install
 ui/elm-stuff
-ui/badmobile.js
+ui/*.js
 badmobile.code-workspace
