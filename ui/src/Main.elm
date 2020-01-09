@@ -62,12 +62,15 @@ update msg model =
                       _                 -> model.twist
             }
             , 
-            let 
-              twist = case List.head (List.map (\key -> throttleMapper model.twist (keyMapper key)) (Keyboard.update keyMsg model.pressedKeys)) of
-                                    Just (cmd, _)  -> cmd
-                                    _              -> model.twist
-            in
-              websocketOut (E.encode 0 (encode twist))
+              case List.head (List.map (\key -> throttleMapper model.twist (keyMapper key)) (Keyboard.update keyMsg model.pressedKeys)) of
+                                    Just (twist, action) -> 
+                                      (
+                                        case action of 
+                                          Publish -> websocketOut (E.encode 0 (encode twist))
+                                          DontPublish -> Cmd.none
+                                      )
+                                    _ -> Cmd.none
+              
           )
         WebsocketIn value ->
           ( { model | responses = value }
