@@ -17,26 +17,26 @@ using json = nlohmann::json;
 
 struct CmdVelHandler : WebSocket::Handler {
   std::set<WebSocket *> _cons;
-  void onConnect(WebSocket *con) override {
-    _cons.insert(con);
-    // send(con->credentials()->username + "someone has joined");
-  }
-  void onDisconnect(WebSocket *con) override {
-    _cons.erase(con);
-    // std::cout << con->credentials()->username + "has left" << std::endl;
-  }
+  void onConnect(WebSocket *con) override { _cons.insert(con); }
+  void onDisconnect(WebSocket *con) override { _cons.erase(con); }
 
   void onData(WebSocket * /*con*/, const char *data) override {
-    json j(data);
-    send(j);
+    auto j = json::parse(data);
     std::cout << "received: " << j.dump() << std::endl;
+
+    // add stuff to reply:
+    json r;
+    r["received"] = true;
+    r["linear_x"] = j.at("linear_x");
+    r["angular_z"] = j.at("angular_z");
+
+    send(r);
   }
 
-  void send(const json & /*j*/) {
+  void send(const json &r) {
     for (auto *con : _cons) {
-      json j = {{"received", 1.0}};
-      con->send(j.dump());
-      std::cout << "send: " << j.dump() << std::endl;
+      con->send(r.dump());
+      std::cout << "send: " << r.dump() << std::endl;
     }
   }
 };
