@@ -18,19 +18,19 @@ add_code_coverage() # Adds instrumentation to all targets
 find_package(Eigen3 REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(Boost REQUIRED COMPONENTS fiber)
+find_package(Seasocks REQUIRED)
 
-include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} lib)
 
 set(dependencies
     ${Boost_LIBRARIES}
+    seasocks
     gtsam
 )
 
 if(BUILD_TESTING)
     # Enable testing for the project
     enable_testing()
-    # Get Catch
-    find_package(Catch2 REQUIRED)
     # because headers are somewhere else
     include_directories(src)
     # concat testfiles 
@@ -46,7 +46,20 @@ if(BUILD_TESTING)
 endif()
 
 #app
-add_executable(main src/main.cc)
-target_link_libraries(main ${dependencies})
+add_executable(${PROJECT_NAME} src/main.cc)
+target_link_libraries(${PROJECT_NAME} ${dependencies})
 
 # target_code_coverage(main)
+
+# install app
+set(ui_files
+  ${CMAKE_CURRENT_SOURCE_DIR}/ui/index.html
+  ${CMAKE_CURRENT_SOURCE_DIR}/ui/badmobile.js
+)
+
+set(targets
+  ${PROJECT_NAME}
+)
+
+install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
+install(TARGETS ${targets} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install)

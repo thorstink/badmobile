@@ -1,43 +1,81 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "2.0.0",
-    "command": "sh",
-    "args": [
-        "-c"
-    ],
-    "options": {
-        "cwd": "${workspaceRoot}/build"
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "command": "sh",
+  "args": [
+    "-c"
+  ],
+  "options": {
+    "cwd": "${workspaceRoot}/build"
+  },
+  "tasks": [
+    {
+      "label": "cmake debug",
+      "args": [
+        "cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCODE_COVERAGE=ON  .."
+      ],
+      "problemMatcher": []
     },
-    "tasks": [
-        {
-            "label": "cmake",
-            "args": [
-                "cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCODE_COVERAGE=ON  .."
-            ]
-        },
-        {
-            "label": "make",
-            "args": [
-                "make -j 8"
-            ],
-            "group": "build",
-            "problemMatcher": []
-        },
-        {
-            "label": "test",
-            "args": [
-                "ctest -VV -j8"
-            ],
-            "group": "test",
-            "problemMatcher": []
-        },
-        {
-            "label": "generate coverage",
-            "args": [
-                "gcovr -r ../ . --html --html-details -o coverage.html"
-            ],
-            "problemMatcher": []
-        }
-    ]
+    {
+      "label": "cmake release",
+      "args": [
+        "cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCODE_COVERAGE=OFF  .."
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "make application",
+      "args": [
+        "make -j 8"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "test",
+      "args": [
+        "ctest -VV -j8"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "generate coverage",
+      "args": [
+        "gcovr -r ../ . --html --html-details -o coverage.html"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "build ui",
+      "args": [
+        "cd ../ui && elm make src/Main.elm --optimize --output=badmobile.js && uglifyjs badmobile.js --compress 'pure_funcs=\"F2,F3,F4,F5,F6,F7,F8,F9,A2,A3,A4,A5,A6,A7,A8,A9\",pure_getters,keep_fargs=false,unsafe_comps,unsafe' | uglifyjs --mangle --output=badmobile.min.js"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "build and install application",
+      "args": [
+        "make install"
+      ],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "open ui",
+      "command": "firefox",
+      "args": [
+        "../ui/index.html"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "clean",
+      "type": "shell",
+      "command": "rm -f ../build/* && rm -f ../ui/badmobile.js && rm -r ../ui/elm-stuff",
+      "problemMatcher": []
+    }
+  ]
 }
