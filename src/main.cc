@@ -22,7 +22,7 @@ struct CmdVelHandler : WebSocket::Handler {
 
   void onData(WebSocket * /*con*/, const char *data) override {
     auto j = json::parse(data);
-    std::cout << "received: " << j.dump() << std::endl;
+    std::cout << "received: " << c++ << std::endl;
 
     // add stuff to reply:
     json r;
@@ -36,9 +36,9 @@ struct CmdVelHandler : WebSocket::Handler {
   void send(const json &r) {
     for (auto *con : _cons) {
       con->send(r.dump());
-      std::cout << "send: " << r.dump() << std::endl;
     }
   }
+  int c = 0;
 };
 
 queue<int, fixed_sized<true>> q{10000};

@@ -36,26 +36,28 @@ type Action = Publish | DontPublish
 keyMapper key =
   -- we use R and F to respectfully increase and decrease linear velocity
   -- we use T and G to respectfully increase and decrease angular velocity
+  -- wasdqe-keys can be used for sending the whole twist or only a part of it.
+  -- all other keys result in sending a zero twist.
   case key of
-    Character "R" ->
-      IncreaseLinear
-    Character "F" ->
-      DecreaseLinear 
-    Character "T" ->
-      IncreaseAngular
-    Character "G" ->
-      DecreaseAngular
     Character "W" ->
-      Forward
-    Character "A" ->
-      Left 
-    Character "S" ->
-      Backward
-    Character "D" ->
-      Right
-    Character "Q" ->
-      CurveLeft
+      IncreaseLinear
+    Character "X" ->
+      DecreaseLinear 
     Character "E" ->
+      IncreaseAngular
+    Character "C" ->
+      DecreaseAngular
+    Character "I" ->
+      Forward
+    Character "J" ->
+      Left 
+    Character "," ->
+      Backward
+    Character "L" ->
+      Right
+    Character "U" ->
+      CurveLeft
+    Character "O" ->
       CurveRight
     _ ->
       Stop
@@ -63,24 +65,24 @@ keyMapper key =
 throttleMapper twist throttle = 
   case throttle of 
     IncreaseLinear ->
-      ({ twist | linear_x = twist.linear_x + 0.02}, DontPublish)
+      ({ twist | linear_x = twist.linear_x * 1.1}, DontPublish)
     DecreaseLinear ->
-      ({ twist | linear_x = twist.linear_x - 0.02}, DontPublish)
+      ({ twist | linear_x = twist.linear_x * 0.9}, DontPublish)
     IncreaseAngular ->
-      ({ twist | angular_z = twist.angular_z + 0.02}, DontPublish)
+      ({ twist | angular_z = twist.angular_z * 1.1}, DontPublish)
     DecreaseAngular ->
-      ({ twist | angular_z = twist.angular_z - 0.02}, DontPublish)
+      ({ twist | angular_z = twist.angular_z * 0.9}, DontPublish)
     Forward ->
       (Twist twist.linear_x 0.0, Publish)
     Backward ->
       (Twist -twist.linear_x 0.0, Publish)
     Left ->
-      (Twist 0.0 -twist.angular_z, Publish)
-    Right ->
       (Twist 0.0 twist.angular_z, Publish)
+    Right ->
+      (Twist 0.0 -twist.angular_z, Publish)
     CurveLeft ->
-      (Twist twist.linear_x -twist.angular_z, Publish)
-    CurveRight ->
       (twist, Publish)
+    CurveRight ->
+      (Twist twist.linear_x -twist.angular_z, Publish)
     Stop ->
       (Twist 0.0 0.0, Publish)

@@ -11,9 +11,16 @@
   },
   "tasks": [
     {
-      "label": "cmake",
+      "label": "cmake debug",
       "args": [
         "cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -DCODE_COVERAGE=ON  .."
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "cmake release",
+      "args": [
+        "cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCODE_COVERAGE=OFF  .."
       ],
       "problemMatcher": []
     },
