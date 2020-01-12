@@ -41,7 +41,7 @@ SCENARIO("full, empty and size of buffer", "[buffer]") {
 }
 
 SCENARIO("When there's a consumer", "[buffer]") {
-  GIVEN("An full fixed size ringbuffer") {
+  GIVEN("A full fixed size ringbuffer") {
     constexpr auto buffer_size = 4;
     Observable<int, buffer_size> o;
     auto s = o.subscribe();
@@ -57,7 +57,7 @@ SCENARIO("When there's a consumer", "[buffer]") {
 }
 
 SCENARIO("When there's are two consumers", "[buffer]") {
-  GIVEN("An full fixed size ringbuffer") {
+  GIVEN("A full fixed size ringbuffer with two late subscribers") {
     constexpr auto buffer_size = 4;
     Observable<int, buffer_size> o;
     auto s1 = o.subscribe();
@@ -71,7 +71,26 @@ SCENARIO("When there's are two consumers", "[buffer]") {
       for (int i = 0; i < buffer_size;) {
         i++;
         CHECK(i == s1.p());
-        // CHECK(i == s2.p());
+        CHECK(i == s2.p());
+      }
+    }
+  }
+
+  GIVEN("A full fixed size ringbuffer with two early subscribers") {
+    constexpr auto buffer_size = 4;
+    Observable<int, buffer_size> o;
+    auto s1 = o.subscribe();
+    auto s2 = o.subscribe();
+
+    // for (int i = 0; i < buffer_size;) {
+    //   o.onNext(++i);
+    // }
+
+    THEN("let both subscription process the values") {
+      for (int i = 0; i < buffer_size;) {
+        i++;
+        CHECK(i == s1.p());
+        CHECK(i == s2.p());
       }
     }
   }

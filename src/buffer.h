@@ -27,6 +27,12 @@ template <typename T, int S> struct Ringbuffer {
 
     return data[mask(read++)];
   }
+
+  inline const T &shift(uint64_t reader) {
+    // assert(!empty());
+    assert(!(reader == write));
+    return data[mask(reader)];
+  }
 };
 
 template <typename T, int S> struct Subscription;
@@ -36,8 +42,8 @@ template <typename T, int S> struct Subscriber {
   bool completed = false;
 
   bool popper(T &t) {
-    t = b.shift();
-    return true;
+    t = b.shift(++reader);
+    return !b.empty();
   };
   Subscription<T, S> getSubscription() { return Subscription<T, S>{*this}; }
 };
