@@ -8,8 +8,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # verbose and sanitizers
 # https://stackoverflow.com/questions/45913603/for-gcc-in-the-fsanitize-option-how-to-use-address-and-leak-together
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
+# set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -g -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -g -fsanitize=address -fno-omit-frame-pointer")
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;")
 include(code-coverage)
@@ -38,6 +40,7 @@ if(BUILD_TESTING)
     set(TEST_SOURCES
         ${TEST_DIR}/base.cc
         ${TEST_DIR}/state.cc
+        ${TEST_DIR}/buffer.cc
     )
     
     add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
@@ -49,6 +52,7 @@ endif()
 add_executable(${PROJECT_NAME} src/main.cc)
 target_link_libraries(${PROJECT_NAME} ${dependencies})
 
+add_executable(buffer src/main_buffer.cc)
 # target_code_coverage(main)
 
 # install app

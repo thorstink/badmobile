@@ -1,6 +1,5 @@
-#include <catch2/catch.hpp>
-
 #include "state.h"
+#include <catch2/catch.hpp>
 #include <gtsam/base/Vector.h>
 #include <gtsam/geometry/Pose3.h>
 

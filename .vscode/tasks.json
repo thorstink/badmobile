@@ -33,11 +33,11 @@
       "problemMatcher": []
     },
     {
-      "label": "test",
+      "label": "make and test",
       "args": [
-        "ctest -VV -j8"
+        "make -j 8 && ctest -VV -j8"
       ],
-      "group": "test",
+      "group": "build",
       "problemMatcher": []
     },
     {
