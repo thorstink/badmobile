@@ -2,7 +2,6 @@
 #include <cstdint>
 #include <memory>
 #include <numeric>
-#include <optional>
 #include <unordered_map>
 #include <vector>
 
@@ -11,16 +10,13 @@ template <typename T, int S> struct Subscription;
 template <typename T, int S> struct Subscriber {
   Observable<T, S> &b; // to the buffer
   uint64_t reader;     // reader index
-
-  std::optional<T> popper() {
-    return !b.empty() ? std::optional<T>{b.shift(reader)} : std::nullopt;
-  };
+  const T *pop() { return &b.shift(reader); };
   Subscription<T, S> getSubscription() { return Subscription<T, S>{*this}; }
 };
 
 template <typename T, int S> struct Subscription {
   explicit Subscription(Subscriber<T, S> &s) : s(s) {}
-  auto pop() { return s.popper(); };
+  const T *pop() { return s.pop(); };
   void unsubscribe() { s.completed = true; }
 
 private:

@@ -21,9 +21,9 @@ int main() {
   // subscription is now a handle to access the buffer
   auto subscription = o.subscribe();
 
-  // std::cout << subscription.pop() << std::endl;
-  // std::cout << subscription.pop() << std::endl;
-  // std::cout << subscription.pop() << std::endl;
+  std::cout << subscription.pop() << std::endl;
+  std::cout << subscription.pop() << std::endl;
+  std::cout << subscription.pop() << std::endl;
 
   uint64_t N = 1000L * 1000L * 100L;
   // initial value counter
