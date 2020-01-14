@@ -1,9 +1,11 @@
 #include "buffer.h"
 #include <catch2/catch.hpp>
+#include <iostream>
+
+constexpr auto buffer_size = 4;
 
 SCENARIO("full, empty and size of buffer", "[buffer]") {
   GIVEN("An empty fixed size ringbuffer") {
-    constexpr auto buffer_size = 4;
     Observable<int, buffer_size> o;
     THEN("It is empty and not full and its size is 0") {
       REQUIRE(o.empty());
@@ -42,7 +44,7 @@ SCENARIO("full, empty and size of buffer", "[buffer]") {
 
 SCENARIO("When there's a consumer", "[buffer]") {
   GIVEN("A full fixed size ringbuffer") {
-    constexpr auto buffer_size = 4;
+
     Observable<int, buffer_size> o;
     auto s = o.subscribe();
     for (int i = 0; i < buffer_size;) {
@@ -50,15 +52,16 @@ SCENARIO("When there's a consumer", "[buffer]") {
     }
     THEN("Through a subscription we can consume the values") {
       for (int i = 0; i < buffer_size;) {
-        CHECK(++i == s.p());
+        if (auto j = s.pop())
+          CHECK(++i == *j);
       }
     }
   }
 }
 
 SCENARIO("When there's are two consumers", "[buffer]") {
-  GIVEN("A full fixed size ringbuffer with two late subscribers") {
-    constexpr auto buffer_size = 4;
+  GIVEN("A full fixed size ringbuffer with two early subscribers") {
+
     Observable<int, buffer_size> o;
     auto s1 = o.subscribe();
     auto s2 = o.subscribe();
@@ -70,28 +73,24 @@ SCENARIO("When there's are two consumers", "[buffer]") {
     THEN("let both subscription process the values") {
       for (int i = 0; i < buffer_size;) {
         i++;
-        CHECK(i == s1.p());
-        CHECK(i == s2.p());
+        if (auto j = s1.pop())
+          CHECK(i == *j);
+        if (auto j = s2.pop())
+          CHECK(i == *j);
       }
+      o.onNext(buffer_size + 1);
+      if (auto j = s2.pop())
+        CHECK(buffer_size + 1 == *j);
     }
   }
 
-  GIVEN("A full fixed size ringbuffer with two early subscribers") {
-    constexpr auto buffer_size = 4;
+  GIVEN("A full fixed size ringbuffer with no subscribers") {
     Observable<int, buffer_size> o;
-    auto s1 = o.subscribe();
-    auto s2 = o.subscribe();
-
-    // for (int i = 0; i < buffer_size;) {
-    //   o.onNext(++i);
-    // }
-
-    THEN("let both subscription process the values") {
-      for (int i = 0; i < buffer_size;) {
-        i++;
-        CHECK(i == s1.p());
-        CHECK(i == s2.p());
-      }
+    for (int i = 0; i < buffer_size;) {
+      o.onNext(++i);
     }
+    WHEN("The static buffer size is exceeded")
+    // o.onNext(buffer_size + 1);
+    THEN("The oldest value will simply be overwritten") {}
   }
 }
