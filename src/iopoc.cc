@@ -4,6 +4,8 @@
 #include <iostream>
 #include <thread>
 
+// https://github.com/aquaticus/nexus433/blob/master/CMakeLists.txt
+
 int main(int argc, char **argv) {
   if (argc < 3) {
     ::std::cerr << "usage: " << argv[0] << " <chip> <line_offset0>=<value0> ..."
