@@ -19,7 +19,6 @@ find_package(Eigen3 REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(Boost REQUIRED COMPONENTS fiber)
 find_package(Seasocks REQUIRED)
-find_package(PkgConfig REQUIRED cmake_modules)
 
 find_library(GPIOD_LIBRARY NAMES libgpiodcxx.so)
 if(NOT GPIOD_LIBRARY)
