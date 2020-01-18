@@ -19,11 +19,18 @@ find_package(Eigen3 REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(Boost REQUIRED COMPONENTS fiber)
 find_package(Seasocks REQUIRED)
+find_package(PkgConfig REQUIRED cmake_modules)
+
+find_library(GPIOD_LIBRARY NAMES libgpiodcxx.so)
+if(NOT GPIOD_LIBRARY)
+  message(FATAL_ERROR "gpiod library not found. Install https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git/")
+endif()
 
 include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} lib)
 
 set(dependencies
     ${Boost_LIBRARIES}
+    ${GPIOD_LIBRARY}
     seasocks
     gtsam
 )
@@ -48,6 +55,10 @@ endif()
 #app
 add_executable(${PROJECT_NAME} src/main.cc)
 target_link_libraries(${PROJECT_NAME} ${dependencies})
+
+#iopc
+add_executable(${PROJECT_NAME}_iopoc src/iopoc.cc)
+target_link_libraries(${PROJECT_NAME}_iopoc ${dependencies})
 
 # target_code_coverage(main)
 

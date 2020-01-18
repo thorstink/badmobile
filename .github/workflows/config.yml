@@ -25,11 +25,18 @@ jobs:
         sudo add-apt-repository ppa:joseluisblancoc/gtsam-develop -y
         sudo apt-get install -y lcov gcovr libboost-all-dev libeigen3-dev libgtsam-dev
     
-    - name: repo dependencies
+    - name: seasocks
       run: |
         git clone https://github.com/mattgodbolt/seasocks.git
         cd seasocks && mkdir build && cd build
         cmake -DCMAKE_BUILD_TYPE=Debug -DUNITTESTS=OFF ..
+        sudo make install
+
+    - name: libgpiod
+      run: |
+        git clone git://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
+        cd libgpiod && git checkout 20f8ac440ecdf5ad3508a5ebfefce7983f478eb9
+        ./autogen.sh --enable-tools=yes --enable-bindings-python --enable-bindings-cxx --prefix=/usr/local
         sudo make install
     
     - name: "build project"
