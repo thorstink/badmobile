@@ -6,12 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# verbose and sanitizers
-# https://stackoverflow.com/questions/45913603/for-gcc-in-the-fsanitize-option-how-to-use-address-and-leak-together
-set(CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address ${CMAKE_SHARED_LINKER_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=address ${CMAKE_EXE_LINKER_FLAGS}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi -Werror -Wall -Wextra")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi -Werror -Wall -Wextra")
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;")
 include(code-coverage)
@@ -30,27 +26,36 @@ endif()
 include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} lib)
 
 set(dependencies
-    ${Boost_LIBRARIES}
-    ${GPIOD_LIBRARY}
-    seasocks
-    gtsam
+  ${Boost_LIBRARIES}
+  ${GPIOD_LIBRARY}
+  seasocks
+  gtsam
 )
 
 if(BUILD_TESTING)
-    # Enable testing for the project
-    enable_testing()
-    # because headers are somewhere else
-    include_directories(src)
-    # concat testfiles 
-    set(TEST_DIR test)
-    set(TEST_SOURCES
-        ${TEST_DIR}/base.cc
-        ${TEST_DIR}/state.cc
-    )
-    
-    add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
-    target_link_libraries(${PROJECT_NAME}_test ${dependencies})
-    add_test(${PROJECT_NAME}_test ${PROJECT_NAME}_test)
+  # verbose and sanitizers
+  # https://stackoverflow.com/questions/45913603/for-gcc-in-the-fsanitize-option-how-to-use-address-and-leak-together
+  # run with the sanitizer on pi:
+  # LD_PRELOAD=$(gcc -print-file-name=libasan.so) ./Badmobile_iopoc 0 14
+  set(CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address ${CMAKE_SHARED_LINKER_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=address ${CMAKE_EXE_LINKER_FLAGS}")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=address -fno-omit-frame-pointer")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fno-omit-frame-pointer")
+
+  # Enable testing for the project
+  enable_testing()
+  # because headers are somewhere else
+  include_directories(src)
+  # concat testfiles 
+  set(TEST_DIR test)
+  set(TEST_SOURCES
+      ${TEST_DIR}/base.cc
+      ${TEST_DIR}/state.cc
+  )
+  
+  add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
+  target_link_libraries(${PROJECT_NAME}_test ${dependencies})
+  add_test(${PROJECT_NAME}_test ${PROJECT_NAME}_test)
 endif()
 
 #app
@@ -72,10 +77,6 @@ set(ui_files
 set(targets
   ${PROJECT_NAME}
 )
-# LD_PRELOAD=/path/to/preload.so
-# set_property(TEST ${PROJECT_NAME}_test ${PROJECT_NAME} ${PROJECT_NAME}_iopoc
-#    PROPERTY
-#    ENVIRONMENT LD_PRELOAD=/path/to/preload.so)
 
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
 install(TARGETS ${targets} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install)
