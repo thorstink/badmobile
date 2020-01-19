@@ -28,7 +28,7 @@ include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCL
 set(dependencies
   ${Boost_LIBRARIES}
   ${GPIOD_LIBRARY}
-  seasocks
+  Seasocks::seasocks
   gtsam
 )
 
