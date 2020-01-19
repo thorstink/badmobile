@@ -36,7 +36,7 @@ if(BUILD_TESTING)
   # verbose and sanitizers
   # https://stackoverflow.com/questions/45913603/for-gcc-in-the-fsanitize-option-how-to-use-address-and-leak-together
   # run with the sanitizer on pi:
-  # LD_PRELOAD=$(gcc -print-file-name=libasan.so) ./Badmobile_iopoc 0 14
+  # LD_PRELOAD=$(gcc -print-file-name=libasan.so) ./Badmobile_test
   set(CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address ${CMAKE_SHARED_LINKER_FLAGS}")
   set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=address ${CMAKE_EXE_LINKER_FLAGS}")
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=address -fno-omit-frame-pointer")
