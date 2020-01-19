@@ -10,6 +10,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # https://stackoverflow.com/questions/45913603/for-gcc-in-the-fsanitize-option-how-to-use-address-and-leak-together
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi -Werror -Wall -Wextra -g -fsanitize=address -fno-omit-frame-pointer")
+link_libraries("-fsanitize=address -fno-omit-frame-pointer")
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;")
 include(code-coverage)
@@ -70,6 +71,10 @@ set(ui_files
 set(targets
   ${PROJECT_NAME}
 )
+# LD_PRELOAD=/path/to/preload.so
+# set_property(TEST ${PROJECT_NAME}_test ${PROJECT_NAME} ${PROJECT_NAME}_iopoc
+#    PROPERTY
+#    ENVIRONMENT LD_PRELOAD=/path/to/preload.so)
 
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
 install(TARGETS ${targets} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install)
