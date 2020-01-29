@@ -59,8 +59,8 @@ if(BUILD_TESTING)
 endif()
 
 #app
-add_executable(${PROJECT_NAME} src/main.cc)
-target_link_libraries(${PROJECT_NAME} ${dependencies})
+add_executable(${PROJECT_NAME}_app src/main.cc)
+target_link_libraries(${PROJECT_NAME}_app ${dependencies})
 
 #iopc
 add_executable(${PROJECT_NAME}_iopoc src/iopoc.cc)
@@ -75,7 +75,8 @@ set(ui_files
 )
 
 set(targets
-  ${PROJECT_NAME}
+  ${PROJECT_NAME}_app
+  ${PROJECT_NAME}_iopoc
 )
 
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
