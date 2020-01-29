@@ -72,6 +72,7 @@ target_link_libraries(${PROJECT_NAME}_iopoc ${dependencies})
 set(ui_files
   ${CMAKE_CURRENT_SOURCE_DIR}/ui/index.html
   ${CMAKE_CURRENT_SOURCE_DIR}/ui/badmobile.js
+  ${CMAKE_CURRENT_SOURCE_DIR}/ui/badmobile.min.js
 )
 
 set(targets
