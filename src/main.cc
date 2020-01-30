@@ -1,7 +1,6 @@
 #include "nlohmann/json.hpp"
 #include <atomic>
-#include <boost/fiber/all.hpp>
-#include <boost/lockfree/queue.hpp>
+#include <gpiod.hpp>
 #include <iostream>
 #include <seasocks/PageHandler.h>
 #include <seasocks/PrintfLogger.h>
@@ -10,13 +9,21 @@
 #include <seasocks/WebSocket.h>
 #include <thread>
 
-using namespace boost::lockfree;
-using namespace boost::fibers;
 using namespace seasocks;
 using json = nlohmann::json;
 
+auto chip_nr = "0";
+auto gpio_nr = "14";
+
+::std::vector<unsigned int> offsets;
+::std::vector<int> values;
+
 struct CmdVelHandler : WebSocket::Handler {
+  CmdVelHandler(std::function<void()> x) : f(x){};
   std::set<WebSocket *> _cons;
+  int c = 0;
+  std::function<void()> f;
+
   void onConnect(WebSocket *con) override { _cons.insert(con); }
   void onDisconnect(WebSocket *con) override { _cons.erase(con); }
 
@@ -30,6 +37,8 @@ struct CmdVelHandler : WebSocket::Handler {
     r["linear_x"] = j.at("linear_x");
     r["angular_z"] = j.at("angular_z");
 
+    f();
+
     send(r);
   }
 
@@ -38,33 +47,24 @@ struct CmdVelHandler : WebSocket::Handler {
       con->send(r.dump());
     }
   }
-  int c = 0;
 };
 
-queue<int, fixed_sized<true>> q{10000};
-std::atomic<int> sum{0};
-
-void produce() {
-  for (int i = 1; i <= 10000; ++i)
-    q.push(i);
-}
-
-void consume() {
-  int i;
-  while (q.pop(i))
-    sum += i;
-}
-
 int main() {
-  auto cmd_vel_handle = std::make_shared<CmdVelHandler>();
-  Server server(std::make_shared<PrintfLogger>(Logger::Level::Error));
+  int toggle = 1;
+  values.push_back(::std::stoul(gpio_nr));
+  offsets.push_back(::std::stoul(gpio_nr));
 
-  boost::fibers::fiber f1{produce};
-  boost::fibers::fiber f2{consume};
-  boost::fibers::fiber f3{consume};
-  f1.join();
-  f2.join();
-  f3.join();
+  ::gpiod::chip chip(chip_nr);
+  auto lines = chip.get_lines(offsets);
+  lines.request({chip_nr, ::gpiod::line_request::DIRECTION_OUTPUT, 0}, values);
+  auto led_iface = [&toggle, &lines] {
+    toggle == 0 ? toggle = 1 : toggle = 0;
+    lines.set_values({toggle});
+    return;
+  };
+  auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
+
+  Server server(std::make_shared<PrintfLogger>(Logger::Level::Error));
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
   server.serve("ui", 2222);
