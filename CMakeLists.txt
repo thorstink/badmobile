@@ -40,6 +40,25 @@ set(dependencies
   gtsam
 )
 
+#app
+add_executable(${PROJECT_NAME}_app src/main.cc)
+target_link_libraries(${PROJECT_NAME}_app ${dependencies})
+
+#iopc
+add_executable(${PROJECT_NAME}_iopoc src/iopoc.cc)
+target_link_libraries(${PROJECT_NAME}_iopoc ${dependencies})
+
+#imu
+add_library(bno055 
+  src/bno055/BNO055_driver/bno055.c
+)
+set(IMU_SOURCES
+  src/imu_test.cc
+)
+
+add_executable(${PROJECT_NAME}_imu ${IMU_SOURCES})
+target_link_libraries(${PROJECT_NAME}_imu bno055)
+
 if(BUILD_TESTING)
   # Enable testing for the project
   enable_testing()
@@ -54,17 +73,9 @@ if(BUILD_TESTING)
   )
   
   add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
-  target_link_libraries(${PROJECT_NAME}_test ${dependencies})
+  target_link_libraries(${PROJECT_NAME}_test ${dependencies} bno055)
   add_test(${PROJECT_NAME}_test ${PROJECT_NAME}_test)
 endif()
-
-#app
-add_executable(${PROJECT_NAME}_app src/main.cc)
-target_link_libraries(${PROJECT_NAME}_app ${dependencies})
-
-#iopc
-add_executable(${PROJECT_NAME}_iopoc src/iopoc.cc)
-target_link_libraries(${PROJECT_NAME}_iopoc ${dependencies})
 
 # target_code_coverage(main)
 
@@ -78,6 +89,7 @@ set(ui_files
 set(targets
   ${PROJECT_NAME}_app
   ${PROJECT_NAME}_iopoc
+  ${PROJECT_NAME}_imu
 )
 
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
