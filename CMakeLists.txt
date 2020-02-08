@@ -9,6 +9,14 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi -Werror -Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi -Werror -Wall -Wextra")
 
+# verbose and sanitizers
+# https://stackoverflow.com/questions/45913603/for-gcc-in-the-fsanitize-option-how-to-use-address-and-leak-together
+# run with the sanitizer on pi:
+set(CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address ${CMAKE_SHARED_LINKER_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=address ${CMAKE_EXE_LINKER_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=address -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fno-omit-frame-pointer")
+
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;")
 include(code-coverage)
 add_code_coverage() # Adds instrumentation to all targets
@@ -33,15 +41,6 @@ set(dependencies
 )
 
 if(BUILD_TESTING)
-  # verbose and sanitizers
-  # https://stackoverflow.com/questions/45913603/for-gcc-in-the-fsanitize-option-how-to-use-address-and-leak-together
-  # run with the sanitizer on pi:
-  # LD_PRELOAD=$(gcc -print-file-name=libasan.so) ./Badmobile_test
-  set(CMAKE_SHARED_LINKER_FLAGS "-fsanitize=address ${CMAKE_SHARED_LINKER_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "-fsanitize=address ${CMAKE_EXE_LINKER_FLAGS}")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -fsanitize=address -fno-omit-frame-pointer")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address -fno-omit-frame-pointer")
-
   # Enable testing for the project
   enable_testing()
   # because headers are somewhere else
@@ -51,6 +50,7 @@ if(BUILD_TESTING)
   set(TEST_SOURCES
       ${TEST_DIR}/base.cc
       ${TEST_DIR}/state.cc
+      ${TEST_DIR}/bno055.cc
   )
   
   add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
