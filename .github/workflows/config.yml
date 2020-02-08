@@ -32,6 +32,13 @@ jobs:
         cmake -DCMAKE_BUILD_TYPE=Debug -DUNITTESTS=OFF ..
         sudo make install
 
+    - name: rxcpp
+      run: |
+        git clone https://github.com/ReactiveX/RxCpp.git
+        cd rxcpp && mkdir build && cd build
+        cmake ..
+        sudo make install
+
     - name: libgpiod
       run: |
         git clone git://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git
