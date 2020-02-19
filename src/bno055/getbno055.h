@@ -306,43 +306,43 @@ typedef enum { normal = 0x00, low = 0x01, suspend = 0x02 } power_t;
 /* ------------------------------------------------------------ *
  * external function prototypes for I2C bus communication code  *
  * ------------------------------------------------------------ */
-extern void get_i2cbus(char *);             // get the I2C bus file handle
-extern int set_page0();                     // set register map page 0
-extern int set_page1();                     // set register map page 1
-extern int get_calstatus(struct bnocal *);  // read calibration status
-extern int get_caloffset(struct bnocal *);  // read calibration values
-extern int get_inf(struct bnoinf *);        // read sensor information
-extern int get_acc(struct bnoacc *);        // read accelerometer data
-extern int get_mag(struct bnomag *);        // read magnetometer data
-extern int get_gyr(struct bnogyr *);        // read gyroscope data
-extern int get_eul(struct bnoeul *);        // read euler orientation
-extern int get_qua(struct bnoqua *);        // read quaternation data
-extern int get_gra(struct bnogra *);        // read gravity data
-extern int get_lin(struct bnolin *);        // read linar acceleration data
-extern int get_clksrc();                    // get the clock source setting
-extern void print_clksrc();                 // print clock source setting
-extern int set_mode(opmode_t);              // set the sensor ops mode
-extern int get_mode();                      // get the sensor ops mode
-extern int print_mode(int);                 // print ops mode string
-extern void print_unit(int);                // print SI unit configuration
-extern int set_power(power_t);              // set the sensor power mode
-extern int get_power();                     // get the sensor power mode
-extern int print_power(int);                // print power mode string
-extern int get_sstat();                     // get system status code
-extern int print_sstat(int);                // print system status string
-extern int get_remap(char);                 // get the axis remap values
-extern int print_remap_conf(int);           // print axis configuration
-extern int print_remap_sign(int);           // print the axis remap +/-
-extern int bno_dump();                      // dump the register map data
-extern int bno_reset();                     // reset the sensor
-extern int save_cal(char *);                // write calibration to file
-extern int load_cal(char *);                // load calibration from file
-extern int get_acc_conf(struct bnoaconf *); // get accelerometer config
-extern int get_mag_conf(struct bnomconf *); // get magnetometer config
-extern int get_gyr_conf(struct bnogconf *); // get gyroscope config
-extern int set_acc_conf();                  // set accelerometer config
-extern int set_mag_conf();                  // set magnetometer config
-extern int set_gyr_conf();                  // set gyroscope config
-extern void print_acc_conf();               // print accelerometer config
-extern void print_mag_conf();               // print magnetometer config
-extern void print_gyr_conf();               // print gyroscope config
+extern void get_i2cbus(char *);                // get the I2C bus file handle
+extern int set_page0();                        // set register map page 0
+extern int set_page1();                        // set register map page 1
+extern int get_calstatus(struct bnocal *);     // read calibration status
+extern int get_caloffset(struct bnocal *);     // read calibration values
+extern int get_inf(struct bnoinf *);           // read sensor information
+extern int get_acc(struct bnoacc *);           // read accelerometer data
+extern int get_mag(struct bnomag *);           // read magnetometer data
+extern int get_gyr(struct bnogyr *);           // read gyroscope data
+extern int get_eul(struct bnoeul *);           // read euler orientation
+extern int get_qua(struct bnoqua *);           // read quaternation data
+extern int get_gra(struct bnogra *);           // read gravity data
+extern int get_lin(struct bnolin *);           // read linar acceleration data
+extern int get_clksrc();                       // get the clock source setting
+extern void print_clksrc();                    // print clock source setting
+extern int set_mode(opmode_t);                 // set the sensor ops mode
+extern int get_mode();                         // get the sensor ops mode
+extern int print_mode(int);                    // print ops mode string
+extern void print_unit(int);                   // print SI unit configuration
+extern int set_power(power_t);                 // set the sensor power mode
+extern int get_power();                        // get the sensor power mode
+extern int print_power(int);                   // print power mode string
+extern int get_sstat();                        // get system status code
+extern int print_sstat(int);                   // print system status string
+extern int get_remap(char);                    // get the axis remap values
+extern int print_remap_conf(int);              // print axis configuration
+extern int print_remap_sign(int);              // print the axis remap +/-
+extern int bno_dump();                         // dump the register map data
+extern int bno_reset();                        // reset the sensor
+extern int save_cal(char *);                   // write calibration to file
+extern int load_cal(char *);                   // load calibration from file
+extern int get_acc_conf(struct bnoaconf *);    // get accelerometer config
+extern int get_mag_conf(struct bnomconf *);    // get magnetometer config
+extern int get_gyr_conf(struct bnogconf *);    // get gyroscope config
+extern int set_acc_conf();                     // set accelerometer config
+extern int set_mag_conf();                     // set magnetometer config
+extern int set_gyr_conf();                     // set gyroscope config
+extern void print_acc_conf(struct bnoaconf *); // print accelerometer config
+extern void print_mag_conf(struct bnomconf *); // print magnetometer config
+extern void print_gyr_conf(struct bnogconf *); // print gyroscope config

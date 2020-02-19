@@ -23,21 +23,31 @@ inline rxcpp::observable<imu_t> createImuObservable() {
       s.on_error(std::exception_ptr());
     }
 
+    struct bnoaconf bnoc_ptr;
+    get_acc_conf(&bnoc_ptr);
+    print_acc_conf(&bnoc_ptr);
+
+    struct bnogconf bnoc_ptr_g;
+    get_gyr_conf(&bnoc_ptr_g);
+    // print_gyr_conf(&bnoc_ptr_g);
+
     std::chrono::time_point<std::chrono::steady_clock> now;
     std::chrono::time_point<std::chrono::steady_clock> wakeup_time;
     constexpr auto delta = std::chrono::milliseconds(5);
 
+    struct bnoacc acc;
+    struct bnogyr gyr;
+
     for (;;) {
-      now = std::chrono::steady_clock::now();
       if (!s.is_subscribed())
         break;
 
-      struct bnoacc acc;
-      struct bnogyr gyr;
-      const auto acc_ok = get_acc(&acc);
-      const auto gyro_ok = get_gyr(&gyr);
+      now = std::chrono::steady_clock::now();
 
-      (!gyro_ok && !acc_ok)
+      const auto acc_err = get_acc(&acc);
+      const auto gyro_err = get_gyr(&gyr);
+
+      (!gyro_err && !acc_err)
           ? s.on_next(imu_t{now.time_since_epoch().count(), acc.adata_x,
                             acc.adata_y, acc.adata_z, gyr.gdata_x, gyr.gdata_y,
                             gyr.gdata_z})
