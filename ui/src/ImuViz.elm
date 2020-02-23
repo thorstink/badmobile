@@ -1,11 +1,4 @@
-module ImuViz exposing (main)
-
-{-| This example shows a more opinionated style of a line chart.
-
-  - The y axis tick marks show the starting values of each series.
-  - We position and color a label next to each series.
-
--}
+module ImuViz exposing (main,view)
 
 import Axis
 import Html

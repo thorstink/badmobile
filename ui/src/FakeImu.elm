@@ -1,4 +1,4 @@
-module FakeImu exposing (ImuData, generateImuData)
+module FakeImu exposing (..)
 
 import Time
 
