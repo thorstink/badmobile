@@ -8,8 +8,9 @@ import Teleop exposing (..)
 import Json.Decode as D
 import Json.Encode as E
 
-port websocketIn : (String -> msg) -> Sub msg
-port websocketOut : String -> Cmd msg
+port websocketCmdVelIn : (String -> msg) -> Sub msg
+port websocketCmdVelOut : String -> Cmd msg
+port websocketImuIn : (String -> msg) -> Sub msg
 
 {- MODEL -}
 
@@ -19,6 +20,7 @@ type alias Model =
     , twist : Twist
     , action : Action
     , responses : String
+    , imu_values : String
     , input : String
     }
 
@@ -30,6 +32,7 @@ init _ =
       , twist = Twist 1.0 1.0
       , action = DontPublish
       , responses = ""
+      , imu_values = "hi2"
       , input = ""
       }
     , Cmd.none
@@ -38,7 +41,9 @@ init _ =
 {- UPDATE -}
 
 type Msg
-  = KeyboardMsg Keyboard.Msg | WebsocketIn String 
+  = KeyboardMsg Keyboard.Msg
+  | WebsocketCmdVelIn String 
+  | WebsocketImuIn String 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -66,14 +71,18 @@ update msg model =
                                     Just (twist, action) -> 
                                       (
                                         case action of 
-                                          Publish -> websocketOut (E.encode 0 (encode twist))
+                                          Publish -> websocketCmdVelOut (E.encode 0 (encode twist))
                                           DontPublish -> Cmd.none
                                       )
                                     _ -> Cmd.none
               
           )
-        WebsocketIn value ->
+        WebsocketCmdVelIn value ->
           ( { model | responses = value }
+          , Cmd.none
+          )
+        WebsocketImuIn value ->
+          ( { model | imu_values = value }
           , Cmd.none
           )
 
@@ -91,14 +100,15 @@ view model =
     in
     div Style.container
         [ p [] [ text ("state: linear-x: " ++ lin_x ++ ", angular-z: " ++ ang_z) ]
-        , p [] [ text ("reply:  "++reply) ]
+        , p [] [ text ("reply:  " ++ reply) ]
+        , p [] [ text (model.imu_values) ]
         ]
 
 {- SUBSCRIPTIONS -}
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [Sub.map KeyboardMsg Keyboard.subscriptions, websocketIn WebsocketIn]
+    Sub.batch [Sub.map KeyboardMsg Keyboard.subscriptions, websocketCmdVelIn WebsocketCmdVelIn, websocketImuIn WebsocketImuIn]
 
 main : Program () Model Msg
 main =

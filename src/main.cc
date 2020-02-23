@@ -1,3 +1,4 @@
+#include "imu_socket.hpp"
 #include "nlohmann/json.hpp"
 #include <atomic>
 #include <gpiod.hpp>
@@ -50,6 +51,8 @@ struct CmdVelHandler : WebSocket::Handler {
 };
 
 int main() {
+
+  /**
   int toggle = 1;
   values.push_back(::std::stoul(gpio_nr));
   offsets.push_back(::std::stoul(gpio_nr));
@@ -62,11 +65,24 @@ int main() {
     lines.set_values({toggle});
     return;
   };
-  auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
+  **/
+  auto led_iface = [] { return; };
+
+  const auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
+
+  const auto imu_handle = std::make_shared<ImuHandler>();
+
+  const auto fake_imu = createFakeImu();
 
   Server server(std::make_shared<PrintfLogger>(Logger::Level::Error));
 
+  fake_imu.subscribe_on(rxcpp::observe_on_new_thread())
+      .subscribe([&](const auto &j) {
+        server.execute([imu_handle, j]() { imu_handle->send(j); });
+      });
+
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
+  server.addWebSocketHandler("/imu", imu_handle);
   server.serve("ui", 2222);
   return 0;
 }

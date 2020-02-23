@@ -83,9 +83,7 @@ update msg model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  Time.every 100 Tick
-
-
+  Time.every 40 Tick
 
 -- VIEW
 
