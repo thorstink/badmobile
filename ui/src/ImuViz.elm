@@ -130,10 +130,6 @@ view model =
     svg [ viewBox 0 0 w h ]
         [ g [ transform [ Translate (padding - 1) (h - padding) ] ]
             [ Axis.bottom [ Axis.tickCount 10 ] xScale ]
-        , g [ transform [ Translate (padding - 1) padding ] ]
-            [ Axis.left [ Axis.ticks (values first) ] yScale
-            , text_ [ fontFamily [ "sans-serif" ], fontSize 10, x 5, y 5 ] [ text "Occurences" ]
-            ]
         , g [ transform [ Translate padding padding ], class [ "series" ] ]
             (List.map
                 (\{ accessor, label } ->
