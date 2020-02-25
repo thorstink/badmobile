@@ -7,6 +7,8 @@ import Style
 import Teleop exposing (..)
 import Json.Decode as D
 import Json.Encode as E
+import ImuViz 
+import FakeImu exposing (ImuData, acc, gyr)
 
 port websocketCmdVelIn : (String -> msg) -> Sub msg
 port websocketCmdVelOut : String -> Cmd msg
@@ -22,6 +24,9 @@ type alias Model =
     , responses : String
     , imu_values : String
     , input : String
+    , t : Int
+    , lastImu : ImuData
+    , imuDatas : List ImuData
     }
 
 
@@ -34,6 +39,9 @@ init _ =
       , responses = ""
       , imu_values = "hi2"
       , input = ""
+      , t = 0
+      , lastImu = ImuData 0 0.0 0.0 0.0 0.0 0.0 0.0
+      , imuDatas = []
       }
     , Cmd.none
     )
@@ -82,7 +90,22 @@ update msg model =
           , Cmd.none
           )
         WebsocketImuIn value ->
-          ( { model | imu_values = value }
+          ( { model | imu_values = value
+                    , t = model.t + 1
+                    , imuDatas = 
+                        let 
+                          new_sample = case (D.decodeString ImuViz.replyImuDecoder model.imu_values) of
+                            Ok imu_msg -> imu_msg
+                            _ -> ImuData 0 0.0 0.0 0.0 0.0 0.0 0.0
+                        in
+                          case List.tail model.imuDatas of
+                            Just tail ->  ( if List.length model.imuDatas > 50 then
+                                              tail ++ [new_sample]
+                                            else
+                                              model.imuDatas ++ [new_sample]
+                                          )
+                            _         -> model.imuDatas ++ [new_sample]
+            }
           , Cmd.none
           )
 
@@ -95,14 +118,30 @@ view model =
                 Ok value -> "linear-x: " ++ (value.linear_x |> String.fromFloat) ++ ", angular z: " ++ (value.angular_z |> String.fromFloat)
                 _ -> "not a valid json"
 
+      imu_reply = case (D.decodeString ImuViz.replyImuDecoder model.imu_values) of
+                Ok value -> "ax: " ++ (value.ax |> String.fromFloat) ++ ", ay: " ++ (value.ay |> String.fromFloat) ++ ", az: " ++ (value.az |> String.fromFloat) ++ "gx: " ++ (value.gx |> String.fromFloat) ++ ", gy: " ++ (value.gy |> String.fromFloat) ++ ", gz: " ++ (value.gz |> String.fromFloat)
+                _ -> "not a valid json"
+
       lin_x = model.twist.linear_x |> String.fromFloat
       ang_z = model.twist.angular_z |> String.fromFloat
     in
-    div Style.container
-        [ p [] [ text ("state: linear-x: " ++ lin_x ++ ", angular-z: " ++ ang_z) ]
-        , p [] [ text ("reply:  " ++ reply) ]
-        , p [] [ text (model.imu_values) ]
+    div Style.full [
+      div Style.row
+        [ div Style.column [     
+            div Style.container
+            [ p [] [ text ("state: linear-x: " ++ lin_x ++ ", angular-z: " ++ ang_z) ]
+            , p [] [ text ("reply:  " ++ reply) ]
+            ]
+          ]
+        , div Style.column [ ImuViz.view model.imuDatas ]
         ]
+      ,
+      div Style.row
+      [ div Style.column [ p [] [text ("imu: " ++ imu_reply)]]
+      , div Style.column [ p [] [text "hi3"]]    
+      ]
+    ]
+
 
 {- SUBSCRIPTIONS -}
 

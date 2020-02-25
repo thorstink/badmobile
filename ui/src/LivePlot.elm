@@ -37,8 +37,6 @@ init _ =
   , Task.perform AdjustTimeZone Time.here
   )
 
-
-
 -- UPDATE
 
 
@@ -55,18 +53,16 @@ update msg model =
       ( { model | time = newTime 
                 , t = model.t + 1
                 , imuDatas = 
-                  (
                     let 
                       new_sample = ImuData model.t (acc model.t 0.0) (acc model.t 0.2) (acc model.t 0.4) (gyr model.t 0.0) (gyr model.t 0.2) (gyr model.t 0.4)
                     in
-                      case (List.tail model.imuDatas) of
+                      case List.tail model.imuDatas of
                         Just tail ->  ( if List.length model.imuDatas > 50 then
                                           tail ++ [new_sample]
                                         else
                                           model.imuDatas ++ [new_sample]
                                       )
                         _         -> model.imuDatas ++ [new_sample]
-                  )
         }
       , Cmd.none
       )

@@ -35,12 +35,13 @@ void to_json(nlohmann::json &j, const imu_t &p) {
 }
 
 auto createFakeImu() {
-  return rxcpp::observable<>::interval(std::chrono::milliseconds(10))
+  return rxcpp::observable<>::interval(std::chrono::milliseconds(100))
       .map([](int i) {
-        int64_t t = uint64_t(i) * 1e7;
+        int64_t t = uint64_t(i) * 1e8;
         double t_d = double(t);
-        return imu_t{t,      sin(t),       sin(t + 0.2), sin(t + 0.4),
-                     cos(t), cos(t + 0.2), cos(t + 0.4)};
+        double j = i;
+        return imu_t{t,      sin(j),       sin(j + 0.2), sin(j + 0.4),
+                     cos(j), cos(j + 0.2), cos(j + 0.4)};
       })
       .map([](const imu_t &msg) { return nlohmann::json(msg); });
 };

@@ -1,4 +1,4 @@
-module ImuViz exposing (main,view)
+module ImuViz exposing (main,view, replyImuDecoder)
 
 import Axis
 import Html
@@ -15,7 +15,20 @@ import TypedSvg.Attributes exposing (class, dy, fill, fontFamily, stroke, textAn
 import TypedSvg.Attributes.InPx exposing (fontSize, height, strokeWidth, x, y)
 import TypedSvg.Core exposing (Svg, text)
 import TypedSvg.Types exposing (AnchorAlignment(..), Paint(..), Transform(..), em)
+import Json.Decode as D
 
+-- DECODE
+
+replyImuDecoder : D.Decoder ImuData
+replyImuDecoder =
+    D.map7 ImuData 
+      (D.at [ "t" ] D.int)
+      (D.at [ "ax" ] D.float)
+      (D.at [ "ay" ] D.float)
+      (D.at [ "az" ] D.float)
+      (D.at [ "gx" ] D.float)
+      (D.at [ "gy" ] D.float)
+      (D.at [ "gz" ] D.float)
 
 w : Float
 w =
