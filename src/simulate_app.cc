@@ -12,11 +12,9 @@ int main() {
   const auto fake_imu = createFakeImu();
 
   const auto t = rxcpp::observe_on_new_thread();
-  fake_imu.map(&to_json)
-      .subscribe_on(t)
-      .subscribe([&](const auto &j) {
-        imu_handle->send(j);
-      });
+  fake_imu.map(&to_json).subscribe_on(t).subscribe([&](const auto &j) {
+    server.execute([imu_handle, j]() { imu_handle->send(j); });
+  });
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
   server.addWebSocketHandler("/imu", imu_handle);
