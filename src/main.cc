@@ -41,8 +41,9 @@ int main() {
   const auto t = rxcpp::observe_on_new_thread();
   imu.map(&to_json)
       .subscribe_on(t)
+      .sample_with_time(t,std::chrono::milliseconds(50))
       .subscribe([&](const auto &j) {
-         imu_handle->send(j);
+        server.execute([imu_handle, j]() { imu_handle->send(j); });
       });
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
