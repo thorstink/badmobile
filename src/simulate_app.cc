@@ -9,15 +9,18 @@ int main() {
 
   const auto cmd_vel_handle = std::make_shared<CmdVelHandler>([] {});
   const auto imu_handle = std::make_shared<ImuHandler>();
-  const auto fake_imu = createFakeImu();
+  auto fake_imu = createFakeImu().publish();
 
-  const auto t = rxcpp::observe_on_new_thread();
-  fake_imu.map(&to_json).subscribe_on(t).subscribe([&](const auto &j) {
+  fake_imu.map(&to_json).subscribe([&](const auto &j) {
     server.execute([imu_handle, j]() { imu_handle->send(j); });
   });
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
   server.addWebSocketHandler("/imu", imu_handle);
-  server.serve("ui", 2222);
+  auto j = std::thread([&server] { server.serve("ui", 2222); });
+
+  fake_imu.connect();
+
+  j.join();
   return 0;
 }
