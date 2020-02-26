@@ -8,8 +8,6 @@
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
 
-using json = nlohmann::json;
-
 auto chip_nr = "0";
 auto gpio_nr = "14";
 
@@ -39,12 +37,9 @@ int main() {
   const auto imu = createImuObservable();
 
   const auto t = rxcpp::observe_on_new_thread();
-  imu.map(&to_json)
-      .subscribe_on(t)
-      .sample_with_time(t,std::chrono::milliseconds(50))
-      .subscribe([&](const auto &j) {
-        server.execute([imu_handle, j]() { imu_handle->send(j); });
-      });
+  imu.map(&to_json).subscribe_on(t).subscribe([&](const auto &j) {
+    server.execute([&imu_handle, j]() { imu_handle->send(j); });
+  });
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
   server.addWebSocketHandler("/imu", imu_handle);
