@@ -17,7 +17,7 @@ struct ImuHandler : seasocks::WebSocket::Handler {
   }
 };
 
-rxcpp::observable<imu_t> createFakeImu() {
+auto createFakeImu() {
   return rxcpp::observable<>::interval(std::chrono::milliseconds(5))
       .map([](int i) {
         int64_t t = uint64_t(i) * 1e8;
