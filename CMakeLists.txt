@@ -33,32 +33,31 @@ endif()
 
 include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} lib)
 
+#imu library
+add_library(bno055 
+  # src/bno055/BNO055_driver/bno055.c
+  src/bno055/i2c_bno055.c
+)
+
 set(dependencies
   ${Boost_LIBRARIES}
   ${GPIOD_LIBRARY}
   Seasocks::seasocks
   gtsam
+  bno055
 )
 
 #app
 add_executable(${PROJECT_NAME}_app src/main.cc)
 target_link_libraries(${PROJECT_NAME}_app ${dependencies})
 
+#simulated app
+add_executable(${PROJECT_NAME}_simulate_app src/simulate_app.cc)
+target_link_libraries(${PROJECT_NAME}_simulate_app ${dependencies})
+
 #iopc
 add_executable(${PROJECT_NAME}_iopoc src/iopoc.cc)
 target_link_libraries(${PROJECT_NAME}_iopoc ${dependencies})
-
-#imu
-add_library(bno055 
-  # src/bno055/BNO055_driver/bno055.c
-  src/bno055/i2c_bno055.c
-)
-set(IMU_SOURCES
-  src/imu_test.cc
-)
-
-add_executable(${PROJECT_NAME}_imu ${IMU_SOURCES})
-target_link_libraries(${PROJECT_NAME}_imu bno055)
 
 if(BUILD_TESTING)
   # Enable testing for the project
@@ -89,8 +88,8 @@ set(ui_files
 
 set(targets
   ${PROJECT_NAME}_app
+  ${PROJECT_NAME}_simulate_app
   ${PROJECT_NAME}_iopoc
-  ${PROJECT_NAME}_imu
 )
 
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)

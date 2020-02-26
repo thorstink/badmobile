@@ -1,16 +1,13 @@
+#include "bno055/bno055driver.hpp"
+#include "cmd_vel_socket.hpp"
 #include "imu_socket.hpp"
 #include "nlohmann/json.hpp"
 #include <atomic>
 #include <gpiod.hpp>
 #include <iostream>
-#include <seasocks/PageHandler.h>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
-#include <seasocks/StringUtil.h>
-#include <seasocks/WebSocket.h>
-#include <thread>
 
-using namespace seasocks;
 using json = nlohmann::json;
 
 auto chip_nr = "0";
@@ -19,40 +16,10 @@ auto gpio_nr = "14";
 ::std::vector<unsigned int> offsets;
 ::std::vector<int> values;
 
-struct CmdVelHandler : WebSocket::Handler {
-  CmdVelHandler(std::function<void()> x) : f(x){};
-  std::set<WebSocket *> _cons;
-  int c = 0;
-  std::function<void()> f;
-
-  void onConnect(WebSocket *con) override { _cons.insert(con); }
-  void onDisconnect(WebSocket *con) override { _cons.erase(con); }
-
-  void onData(WebSocket * /*con*/, const char *data) override {
-    auto j = json::parse(data);
-    std::cout << "received: " << c++ << std::endl;
-
-    // add stuff to reply:
-    json r;
-    r["received"] = true;
-    r["linear_x"] = j.at("linear_x");
-    r["angular_z"] = j.at("angular_z");
-
-    f();
-
-    send(r);
-  }
-
-  void send(const json &r) {
-    for (auto *con : _cons) {
-      con->send(r.dump());
-    }
-  }
-};
-
 int main() {
+  seasocks::Server server(
+      std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
 
-  /**
   int toggle = 1;
   values.push_back(::std::stoul(gpio_nr));
   offsets.push_back(::std::stoul(gpio_nr));
@@ -65,18 +32,13 @@ int main() {
     lines.set_values({toggle});
     return;
   };
-  **/
-  auto led_iface = [] { return; };
 
   const auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
-
   const auto imu_handle = std::make_shared<ImuHandler>();
+  const auto imu = createImuObservable();
 
-  const auto fake_imu = createFakeImu();
-
-  Server server(std::make_shared<PrintfLogger>(Logger::Level::Error));
-
-  fake_imu.subscribe_on(rxcpp::observe_on_new_thread())
+  imu.map(&to_json)
+      .subscribe_on(rxcpp::observe_on_new_thread())
       .subscribe([&](const auto &j) {
         server.execute([imu_handle, j]() { imu_handle->send(j); });
       });
