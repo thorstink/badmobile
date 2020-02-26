@@ -12,14 +12,15 @@
 struct CmdVelHandler : seasocks::WebSocket::Handler {
   CmdVelHandler(std::function<void()> x) : f(x){};
   std::set<seasocks::WebSocket *> _cons;
-  const std::function<void()> f;
+  int c = 0;
+  std::function<void()> f;
 
   void onConnect(seasocks::WebSocket *con) override { _cons.insert(con); }
   void onDisconnect(seasocks::WebSocket *con) override { _cons.erase(con); }
 
-  void onData(seasocks::WebSocket * /*con*/, const char *data) const {
+  void onData(seasocks::WebSocket * /*con*/, const char *data) override {
     auto j = nlohmann::json::parse(data);
-    std::cout << "received" << std::endl;
+    std::cout << "received: " << c++ << std::endl;
 
     // add stuff to reply:
     nlohmann::json r;
@@ -32,7 +33,7 @@ struct CmdVelHandler : seasocks::WebSocket::Handler {
     send(r);
   }
 
-  void send(const nlohmann::json &r) const {
+  void send(const nlohmann::json &r) {
     for (auto *con : _cons) {
       con->send(r.dump());
     }
