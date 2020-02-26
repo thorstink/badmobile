@@ -27,8 +27,9 @@ int main() {
   ::gpiod::chip chip(chip_nr);
   auto lines = chip.get_lines(offsets);
   lines.request({chip_nr, ::gpiod::line_request::DIRECTION_OUTPUT, 0}, values);
+
   auto led_iface = [&toggle, &lines] {
-    toggle == 0 ? toggle = 1 : toggle = 0;
+    toggle = toggle == 0 ? 1 : 0;
     lines.set_values({toggle});
     return;
   };
@@ -37,9 +38,10 @@ int main() {
   const auto imu_handle = std::make_shared<ImuHandler>();
   const auto imu = createImuObservable();
 
+  const auto t = rxcpp::observe_on_new_thread();
   imu.map(&to_json)
-      .subscribe_on(rxcpp::observe_on_new_thread())
-      .sample_with_time(std::chrono::milliseconds(100))
+      .subscribe_on(t)
+      .sample_with_time(t,std::chrono::milliseconds(50))
       .subscribe([&](const auto &j) {
         server.execute([imu_handle, j]() { imu_handle->send(j); });
       });

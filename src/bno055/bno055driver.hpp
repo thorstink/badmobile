@@ -44,8 +44,8 @@ inline rxcpp::observable<imu_t> createImuObservable() {
       const auto gyro_err = get_gyr(&gyr);
 
       (!gyro_err && !acc_err)
-          ? s.on_next(imu_t{now.time_since_epoch().count(), acc.adata_x,
-                            acc.adata_y, acc.adata_z, gyr.gdata_x, gyr.gdata_y,
+          ? s.on_next(imu_t{now.time_since_epoch().count(), acc.adata_x/100.0,
+                            acc.adata_y/100.0, acc.adata_z/100.0, gyr.gdata_x, gyr.gdata_y,
                             gyr.gdata_z})
           : s.on_error(std::exception_ptr());
 
