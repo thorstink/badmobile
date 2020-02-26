@@ -38,7 +38,8 @@ int main() {
   const auto imu = createImuObservable();
 
   imu.map(&to_json)
-      .subscribe_on(rxcpp::observe_on_new_thread())
+      .sample_with_time(rxcpp::observe_on_new_thread(),
+                        std::chrono::milliseconds(100))
       .subscribe([&](const auto &j) {
         server.execute([imu_handle, j]() { imu_handle->send(j); });
       });
