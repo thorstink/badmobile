@@ -1,5 +1,4 @@
 {
-  "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
   "clang-format.executable": "/usr/bin/clang-format",
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
