@@ -25,13 +25,14 @@ find_package(Eigen3 REQUIRED)
 find_package(GTSAM REQUIRED)
 find_package(Boost REQUIRED COMPONENTS fiber)
 find_package(Seasocks REQUIRED)
+find_package(pigpio REQUIRED)
 
 find_library(GPIOD_LIBRARY NAMES libgpiodcxx.so)
 if(NOT GPIOD_LIBRARY)
   message(FATAL_ERROR "gpiod library not found. Install https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git/")
 endif()
 
-include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} lib src/msg)
+include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} ${PIGPIO_INCLUDE_DIRS} lib src/msg)
 
 #imu library
 add_library(bno055 
@@ -42,6 +43,7 @@ add_library(bno055
 set(dependencies
   ${Boost_LIBRARIES}
   ${GPIOD_LIBRARY}
+  pigpio
   Seasocks::seasocks
   gtsam
   bno055
@@ -58,6 +60,10 @@ target_link_libraries(${PROJECT_NAME}_simulate_app ${dependencies})
 #iopc
 add_executable(${PROJECT_NAME}_iopoc src/iopoc.cc)
 target_link_libraries(${PROJECT_NAME}_iopoc ${dependencies})
+
+#iopc
+add_executable(${PROJECT_NAME}_lsm9ds1 src/lsm9ds1.cc)
+target_link_libraries(${PROJECT_NAME}_lsm9ds1 ${dependencies})
 
 if(BUILD_TESTING)
   # Enable testing for the project
