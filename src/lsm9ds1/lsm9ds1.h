@@ -1,0 +1,75 @@
+#pragma once
+
+#define SPI_READ 0x80
+#define SPI_WRITE 0x0
+#define WHO_AM_I_AG_RSP 0x68
+
+/**! Register mapping for accelerometer/gyroscope component */
+typedef enum {
+  LSM9DS1_REGISTER_WHO_AM_I_XG = 0x0F,
+  LSM9DS1_REGISTER_CTRL_REG1_G = 0x10,
+  LSM9DS1_REGISTER_CTRL_REG2_G = 0x11,
+  LSM9DS1_REGISTER_CTRL_REG3_G = 0x12,
+  LSM9DS1_REGISTER_TEMP_OUT_L = 0x15,
+  LSM9DS1_REGISTER_TEMP_OUT_H = 0x16,
+  LSM9DS1_REGISTER_STATUS_REG = 0x17,
+  LSM9DS1_REGISTER_OUT_X_L_G = 0x18,
+  LSM9DS1_REGISTER_OUT_X_H_G = 0x19,
+  LSM9DS1_REGISTER_OUT_Y_L_G = 0x1A,
+  LSM9DS1_REGISTER_OUT_Y_H_G = 0x1B,
+  LSM9DS1_REGISTER_OUT_Z_L_G = 0x1C,
+  LSM9DS1_REGISTER_OUT_Z_H_G = 0x1D,
+  LSM9DS1_REGISTER_CTRL_REG4 = 0x1E,
+  LSM9DS1_REGISTER_CTRL_REG5_XL = 0x1F,
+  LSM9DS1_REGISTER_CTRL_REG6_XL = 0x20,
+  LSM9DS1_REGISTER_CTRL_REG7_XL = 0x21,
+  LSM9DS1_REGISTER_CTRL_REG8 = 0x22,
+  LSM9DS1_REGISTER_CTRL_REG9 = 0x23,
+  LSM9DS1_REGISTER_CTRL_REG10 = 0x24,
+
+  LSM9DS1_REGISTER_OUT_X_L_XL = 0x28,
+  LSM9DS1_REGISTER_OUT_X_H_XL = 0x29,
+  LSM9DS1_REGISTER_OUT_Y_L_XL = 0x2A,
+  LSM9DS1_REGISTER_OUT_Y_H_XL = 0x2B,
+  LSM9DS1_REGISTER_OUT_Z_L_XL = 0x2C,
+  LSM9DS1_REGISTER_OUT_Z_H_XL = 0x2D,
+} lsm9ds1AccGyroRegisters_t;
+
+/**! Enumeration for accelerometer range (2/4/8/16 g) */
+typedef enum {
+  LSM9DS1_ACCELRANGE_2G = (0b00 << 3),
+  LSM9DS1_ACCELRANGE_16G = (0b01 << 3),
+  LSM9DS1_ACCELRANGE_4G = (0b10 << 3),
+  LSM9DS1_ACCELRANGE_8G = (0b11 << 3),
+} lsm9ds1AccelRange_t;
+
+/**! Enumeration for accelerometer data rage 3.125 - 1600 Hz */
+typedef enum {
+  LSM9DS1_ACCELDATARATE_POWERDOWN = (0b0000 << 4),
+  LSM9DS1_ACCELDATARATE_3_125HZ = (0b0001 << 4),
+  LSM9DS1_ACCELDATARATE_6_25HZ = (0b0010 << 4),
+  LSM9DS1_ACCELDATARATE_12_5HZ = (0b0011 << 4),
+  LSM9DS1_ACCELDATARATE_25HZ = (0b0100 << 4),
+  LSM9DS1_ACCELDATARATE_50HZ = (0b0101 << 4),
+  LSM9DS1_ACCELDATARATE_100HZ = (0b0110 << 4),
+  LSM9DS1_ACCELDATARATE_200HZ = (0b0111 << 4),
+  LSM9DS1_ACCELDATARATE_400HZ = (0b1000 << 4),
+  LSM9DS1_ACCELDATARATE_800HZ = (0b1001 << 4),
+  LSM9DS1_ACCELDATARATE_1600HZ = (0b1010 << 4)
+} lm9ds1AccelDataRate_t;
+
+/**! Enumeration for magnetometer scaling (4/8/12/16 gauss) */
+typedef enum {
+  LSM9DS1_MAGGAIN_4GAUSS = (0b00 << 5),  // +/- 4 gauss
+  LSM9DS1_MAGGAIN_8GAUSS = (0b01 << 5),  // +/- 8 gauss
+  LSM9DS1_MAGGAIN_12GAUSS = (0b10 << 5), // +/- 12 gauss
+  LSM9DS1_MAGGAIN_16GAUSS = (0b11 << 5)  // +/- 16 gauss
+} lsm9ds1MagGain_t;
+
+/**! Enumeration for gyroscope scaling (245/500/2000 dps) */
+typedef enum {
+  LSM9DS1_GYROSCALE_245DPS = (0b00 << 4), // +/- 245 degrees per second rotation
+  LSM9DS1_GYROSCALE_500DPS = (0b01 << 4), // +/- 500 degrees per second rotation
+  LSM9DS1_GYROSCALE_2000DPS =
+      (0b11 << 4) // +/- 2000 degrees per second rotation
+} lsm9ds1GyroScale_t;

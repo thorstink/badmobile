@@ -1,72 +1,50 @@
+#include "cmd_vel_socket.hpp"
+#include "imu_socket.hpp"
+#include "lsm9ds1/lsm9ds1driver.hpp"
 #include "nlohmann/json.hpp"
 #include <atomic>
-#include <gpiod.hpp>
 #include <iostream>
-#include <seasocks/PageHandler.h>
+#include <pigpio.h>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
-#include <seasocks/StringUtil.h>
-#include <seasocks/WebSocket.h>
-#include <thread>
 
-using namespace seasocks;
-using json = nlohmann::json;
+constexpr auto LED = 12;
 
-auto chip_nr = "0";
-auto gpio_nr = "14";
-
-::std::vector<unsigned int> offsets;
-::std::vector<int> values;
-
-struct CmdVelHandler : WebSocket::Handler {
-  CmdVelHandler(std::function<void()> x) : f(x){};
-  std::set<WebSocket *> _cons;
-  int c = 0;
-  std::function<void()> f;
-
-  void onConnect(WebSocket *con) override { _cons.insert(con); }
-  void onDisconnect(WebSocket *con) override { _cons.erase(con); }
-
-  void onData(WebSocket * /*con*/, const char *data) override {
-    auto j = json::parse(data);
-    std::cout << "received: " << c++ << std::endl;
-
-    // add stuff to reply:
-    json r;
-    r["received"] = true;
-    r["linear_x"] = j.at("linear_x");
-    r["angular_z"] = j.at("angular_z");
-
-    f();
-
-    send(r);
+struct toggleLed {
+  toggleLed(int GPIOPIN = LED) : toggle(true) {
+    gpioSetMode(GPIOPIN, PI_OUTPUT);
   }
-
-  void send(const json &r) {
-    for (auto *con : _cons) {
-      con->send(r.dump());
-    }
-  }
+  bool toggle;
+  void operator()() {
+    toggle = !toggle;
+    gpioWrite(LED, toggle);
+    return;
+  };
 };
 
 int main() {
-  int toggle = 1;
-  values.push_back(::std::stoul(gpio_nr));
-  offsets.push_back(::std::stoul(gpio_nr));
+  if (gpioInitialise() < 0)
+    std::exception_ptr();
 
-  ::gpiod::chip chip(chip_nr);
-  auto lines = chip.get_lines(offsets);
-  lines.request({chip_nr, ::gpiod::line_request::DIRECTION_OUTPUT, 0}, values);
-  auto led_iface = [&toggle, &lines] {
-    toggle == 0 ? toggle = 1 : toggle = 0;
-    lines.set_values({toggle});
-    return;
-  };
-  auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
+  seasocks::Server server(
+      std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
 
-  Server server(std::make_shared<PrintfLogger>(Logger::Level::Error));
+  toggleLed led_iface(LED);
+
+  const auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
+  const auto imu_handle = std::make_shared<ImuHandler>();
+  const auto imu = createLSM9DS1Observable();
+
+  const auto t = rxcpp::observe_on_new_thread();
+  imu.map(&to_json).subscribe_on(t).subscribe([&](const auto &j) {
+    server.execute([&imu_handle, j]() { imu_handle->send(j); });
+  });
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
+  server.addWebSocketHandler("/imu", imu_handle);
   server.serve("ui", 2222);
+
+  gpioTerminate();
+
   return 0;
 }

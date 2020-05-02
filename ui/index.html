@@ -19,12 +19,19 @@
     var app = Elm.Main.init({
       node: document.getElementById('elm')
     });
-    var ws = new WebSocket('ws://' + window.location.host + '/cmd');
-    ws.onmessage = function (message) {
+    var ws_cmd = new WebSocket('ws://' + window.location.host + '/cmd');
+    ws_cmd.onmessage = function (message) {
       console.log(message);
-      app.ports.websocketIn.send(message.data);
+      app.ports.websocketCmdVelIn.send(message.data);
     };
-    app.ports.websocketOut.subscribe(function (msg) { ws.send(msg); });
+    app.ports.websocketCmdVelOut.subscribe(function (msg) { ws_cmd.send(msg); });
+
+    var ws_imu = new WebSocket('ws://' + window.location.host + '/imu');
+    ws_imu.onmessage = function (message) {
+      console.log(message);
+      app.ports.websocketImuIn.send(message.data);
+    };
+
   </script>
 </body>
 

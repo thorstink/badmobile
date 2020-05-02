@@ -7,9 +7,12 @@ import Style
 import Teleop exposing (..)
 import Json.Decode as D
 import Json.Encode as E
+import ImuViz 
+import FakeImu exposing (ImuData, acc, gyr)
 
-port websocketIn : (String -> msg) -> Sub msg
-port websocketOut : String -> Cmd msg
+port websocketCmdVelIn : (String -> msg) -> Sub msg
+port websocketCmdVelOut : String -> Cmd msg
+port websocketImuIn : (String -> msg) -> Sub msg
 
 {- MODEL -}
 
@@ -19,7 +22,11 @@ type alias Model =
     , twist : Twist
     , action : Action
     , responses : String
+    , imu_values : String
     , input : String
+    , t : Int
+    , lastImu : ImuData
+    , imuDatas : List ImuData
     }
 
 
@@ -30,7 +37,11 @@ init _ =
       , twist = Twist 1.0 1.0
       , action = DontPublish
       , responses = ""
+      , imu_values = "hi2"
       , input = ""
+      , t = 0
+      , lastImu = ImuData 0 0.0 0.0 0.0 0.0 0.0 0.0
+      , imuDatas = []
       }
     , Cmd.none
     )
@@ -38,7 +49,9 @@ init _ =
 {- UPDATE -}
 
 type Msg
-  = KeyboardMsg Keyboard.Msg | WebsocketIn String 
+  = KeyboardMsg Keyboard.Msg
+  | WebsocketCmdVelIn String 
+  | WebsocketImuIn String 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -66,14 +79,33 @@ update msg model =
                                     Just (twist, action) -> 
                                       (
                                         case action of 
-                                          Publish -> websocketOut (E.encode 0 (encode twist))
+                                          Publish -> websocketCmdVelOut (E.encode 0 (encode twist))
                                           DontPublish -> Cmd.none
                                       )
                                     _ -> Cmd.none
               
           )
-        WebsocketIn value ->
+        WebsocketCmdVelIn value ->
           ( { model | responses = value }
+          , Cmd.none
+          )
+        WebsocketImuIn value ->
+          ( { model | imu_values = value
+                    , t = model.t + 1
+                    , imuDatas = 
+                        let 
+                          new_sample = case (D.decodeString ImuViz.replyImuDecoder model.imu_values) of
+                            Ok imu_msg -> imu_msg
+                            _ -> ImuData 0 0.0 0.0 0.0 0.0 0.0 0.0
+                        in
+                          case List.tail model.imuDatas of
+                            Just tail ->  ( if List.length model.imuDatas > 50 then
+                                              tail ++ [new_sample]
+                                            else
+                                              model.imuDatas ++ [new_sample]
+                                          )
+                            _         -> model.imuDatas ++ [new_sample]
+            }
           , Cmd.none
           )
 
@@ -86,19 +118,36 @@ view model =
                 Ok value -> "linear-x: " ++ (value.linear_x |> String.fromFloat) ++ ", angular z: " ++ (value.angular_z |> String.fromFloat)
                 _ -> "not a valid json"
 
+      imu_reply = case (D.decodeString ImuViz.replyImuDecoder model.imu_values) of
+                Ok value -> "ax: " ++ (value.ax |> String.fromFloat) ++ ", ay: " ++ (value.ay |> String.fromFloat) ++ ", az: " ++ (value.az |> String.fromFloat) ++ "gx: " ++ (value.gx |> String.fromFloat) ++ ", gy: " ++ (value.gy |> String.fromFloat) ++ ", gz: " ++ (value.gz |> String.fromFloat)
+                _ -> "not a valid json"
+
       lin_x = model.twist.linear_x |> String.fromFloat
       ang_z = model.twist.angular_z |> String.fromFloat
     in
-    div Style.container
-        [ p [] [ text ("state: linear-x: " ++ lin_x ++ ", angular-z: " ++ ang_z) ]
-        , p [] [ text ("reply:  "++reply) ]
+    div Style.full [
+      div Style.row
+        [ div Style.column [     
+            div Style.container
+            [ p [] [ text ("state: linear-x: " ++ lin_x ++ ", angular-z: " ++ ang_z) ]
+            , p [] [ text ("reply:  " ++ reply) ]
+            ]
+          ]
+        , div Style.column [ ImuViz.view model.imuDatas ]
         ]
+      ,
+      div Style.row
+      [ div Style.column [ p [] [text ("imu: " ++ imu_reply)]]
+      , div Style.column [ p [] [text "hi3"]]    
+      ]
+    ]
+
 
 {- SUBSCRIPTIONS -}
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [Sub.map KeyboardMsg Keyboard.subscriptions, websocketIn WebsocketIn]
+    Sub.batch [Sub.map KeyboardMsg Keyboard.subscriptions, websocketCmdVelIn WebsocketCmdVelIn, websocketImuIn WebsocketImuIn]
 
 main : Program () Model Msg
 main =
