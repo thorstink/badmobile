@@ -1,40 +1,38 @@
-#include "bno055/bno055driver.hpp"
 #include "cmd_vel_socket.hpp"
 #include "imu_socket.hpp"
+#include "lsm9ds1/lsm9ds1driver.hpp"
 #include "nlohmann/json.hpp"
 #include <atomic>
-#include <gpiod.hpp>
 #include <iostream>
+#include <pigpio.h>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
 
-auto chip_nr = "0";
-auto gpio_nr = "14";
+constexpr auto LED = 12;
 
-::std::vector<unsigned int> offsets;
-::std::vector<int> values;
+struct toggleLed {
+  toggleLed(int GPIOPIN = LED) : toggle(true) {
+    gpioSetMode(GPIOPIN, PI_OUTPUT);
+  }
+  bool toggle;
+  void operator()() {
+    toggle = !toggle;
+    gpioWrite(LED, toggle);
+    return;
+  };
+};
 
 int main() {
   seasocks::Server server(
       std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
+  if (gpioInitialise() < 0)
+    std::exception_ptr();
 
-  int toggle = 1;
-  values.push_back(::std::stoul(gpio_nr));
-  offsets.push_back(::std::stoul(gpio_nr));
-
-  ::gpiod::chip chip(chip_nr);
-  auto lines = chip.get_lines(offsets);
-  lines.request({chip_nr, ::gpiod::line_request::DIRECTION_OUTPUT, 0}, values);
-
-  auto led_iface = [&toggle, &lines] {
-    toggle = toggle == 0 ? 1 : 0;
-    lines.set_values({toggle});
-    return;
-  };
+  toggleLed led_iface(LED);
 
   const auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
   const auto imu_handle = std::make_shared<ImuHandler>();
-  const auto imu = createImuObservable();
+  const auto imu = createLSM9DS1Observable();
 
   const auto t = rxcpp::observe_on_new_thread();
   imu.map(&to_json).subscribe_on(t).subscribe([&](const auto &j) {

@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi -Werror -Wall -Wextra")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi -Werror -Wall -Wextra")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi -Werror -Wall -Wextra -march=native -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi -Werror -Wall -Wextra -march=native -O2")
 
 # verbose and sanitizers
 # https://stackoverflow.com/questions/45913603/for-gcc-in-the-fsanitize-option-how-to-use-address-and-leak-together
@@ -27,14 +27,9 @@ find_package(Boost REQUIRED COMPONENTS fiber)
 find_package(Seasocks REQUIRED)
 find_package(pigpio REQUIRED)
 
-find_library(GPIOD_LIBRARY NAMES libgpiodcxx.so)
-if(NOT GPIOD_LIBRARY)
-  message(FATAL_ERROR "gpiod library not found. Install https://git.kernel.org/pub/scm/libs/libgpiod/libgpiod.git/")
-endif()
-
 include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} ${PIGPIO_INCLUDE_DIRS} lib src/msg)
 
-#imu library
+#bno055 imu library
 add_library(bno055 
   # src/bno055/BNO055_driver/bno055.c
   src/bno055/i2c_bno055.c
@@ -42,7 +37,6 @@ add_library(bno055
 
 set(dependencies
   ${Boost_LIBRARIES}
-  ${GPIOD_LIBRARY}
   pigpio
   Seasocks::seasocks
   gtsam
@@ -57,11 +51,7 @@ target_link_libraries(${PROJECT_NAME}_app ${dependencies})
 add_executable(${PROJECT_NAME}_simulate_app src/simulate_app.cc)
 target_link_libraries(${PROJECT_NAME}_simulate_app ${dependencies})
 
-#iopc
-add_executable(${PROJECT_NAME}_iopoc src/iopoc.cc)
-target_link_libraries(${PROJECT_NAME}_iopoc ${dependencies})
-
-#iopc
+#imu
 add_executable(${PROJECT_NAME}_lsm9ds1 src/lsm9ds1.cc)
 target_link_libraries(${PROJECT_NAME}_lsm9ds1 ${dependencies})
 
@@ -96,6 +86,7 @@ set(targets
   ${PROJECT_NAME}_app
   ${PROJECT_NAME}_simulate_app
   ${PROJECT_NAME}_iopoc
+  ${PROJECT_NAME}_motor
 )
 
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
