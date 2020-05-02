@@ -85,8 +85,6 @@ set(ui_files
 set(targets
   ${PROJECT_NAME}_app
   ${PROJECT_NAME}_simulate_app
-  ${PROJECT_NAME}_iopoc
-  ${PROJECT_NAME}_motor
 )
 
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)

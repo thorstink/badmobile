@@ -23,10 +23,11 @@ struct toggleLed {
 };
 
 int main() {
-  seasocks::Server server(
-      std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
   if (gpioInitialise() < 0)
     std::exception_ptr();
+
+  seasocks::Server server(
+      std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
 
   toggleLed led_iface(LED);
 
@@ -42,5 +43,8 @@ int main() {
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
   server.addWebSocketHandler("/imu", imu_handle);
   server.serve("ui", 2222);
+
+  gpioTerminate();
+
   return 0;
 }

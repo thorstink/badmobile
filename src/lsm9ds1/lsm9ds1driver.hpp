@@ -143,7 +143,12 @@ inline rxcpp::observable<imu_t> createLSM9DS1Observable() {
         std::this_thread::sleep_until(wakeup_time);
       }
     }
-    s.on_completed();
+    e = spiClose(g_spi_handle);
+    if (e != 0) {
+      s.on_error(std::exception_ptr()); // spi close error
+    } else {
+      s.on_completed();
+    }
   });
 };
 
