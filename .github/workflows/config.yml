@@ -24,7 +24,14 @@ jobs:
       run: |
         sudo add-apt-repository ppa:joseluisblancoc/gtsam-develop -y
         sudo apt-get install -y lcov gcovr libboost-all-dev libeigen3-dev libgtsam-dev libtool pkg-config autoconf-archive
-    
+
+    - name: pigpio
+      run: |
+        git clone https://github.com/joan2937/pigpio.git
+        cd pigpio && mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug ..
+        sudo make install        
+
     - name: seasocks
       run: |
         git clone https://github.com/mattgodbolt/seasocks.git
