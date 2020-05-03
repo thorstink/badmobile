@@ -1,6 +1,5 @@
 #include "cmd_vel_socket.hpp"
 #include "imu_socket.hpp"
-#include <fmt/core.h>
 #include <fmt/format.h>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
