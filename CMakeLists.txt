@@ -26,8 +26,9 @@ find_package(GTSAM REQUIRED)
 find_package(Boost REQUIRED COMPONENTS fiber)
 find_package(Seasocks REQUIRED)
 find_package(pigpio REQUIRED)
+find_package(fmt REQUIRED)
 
-include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} ${PIGPIO_INCLUDE_DIRS} lib src/msg)
+include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} ${PIGPIO_INCLUDE_DIRS} ${FMT_INCLUDE_DIRS} lib src/msg)
 
 #bno055 imu library
 add_library(bno055 
@@ -37,6 +38,7 @@ add_library(bno055
 
 set(dependencies
   ${Boost_LIBRARIES}
+  fmt
   pigpio
   Seasocks::seasocks
   gtsam

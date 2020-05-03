@@ -23,7 +23,7 @@ jobs:
     - name: apt dependencies
       run: |
         sudo add-apt-repository ppa:joseluisblancoc/gtsam-develop -y
-        sudo apt-get install -y lcov gcovr libboost-all-dev libeigen3-dev libgtsam-dev libtool pkg-config autoconf-archive
+        sudo apt-get install -y lcov gcovr libboost-all-dev libeigen3-dev libgtsam-dev libtool pkg-config autoconf-archive libfmt-dev
 
     - name: pigpio
       run: |

@@ -3,6 +3,7 @@
 #include "lsm9ds1/lsm9ds1driver.hpp"
 #include "nlohmann/json.hpp"
 #include <atomic>
+#include <fmt/format.h>
 #include <iostream>
 #include <pigpio.h>
 #include <seasocks/PrintfLogger.h>
@@ -22,7 +23,20 @@ struct toggleLed {
   };
 };
 
-int main() {
+int main(int argc, const char *argv[]) {
+
+  auto command = std::string{};
+  for (auto cursor = argv, end = argv + argc; cursor != end; ++cursor) {
+    command += std::string{*cursor};
+  }
+
+  std::cerr << "command = " << command.c_str() << std::endl;
+
+  fmt::print("Running application {0} using {1} for configuration.", argv[0],
+             argv[1]);
+  // manually flush because otherwise not visable.
+  std::cout.flush();
+
   if (gpioInitialise() < 0)
     std::exception_ptr();
 
