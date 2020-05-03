@@ -1,9 +1,13 @@
 #include "cmd_vel_socket.hpp"
 #include "imu_socket.hpp"
 #include <fmt/format.h>
+#include <fstream>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
 
+// @TODO come up with a compelling reason why this shouldn't be here.
+std::string settingsFile;
+nlohmann::json settings;
 int main(int argc, const char *argv[]) {
 
   auto command = std::string{};
@@ -17,6 +21,21 @@ int main(int argc, const char *argv[]) {
              argv[1]);
   // manually flush because otherwise not visable.
   std::cout.flush();
+
+  bool setting = false;
+
+  if (argc == 2 && std::ifstream(argv[1]).good()) {
+    setting = true;
+    settingsFile = argv[1];
+  }
+
+  if (setting) {
+    std::cerr << "settings = " << settingsFile.c_str() << std::endl;
+    std::ifstream i(settingsFile);
+    if (i.good()) {
+      i >> settings;
+    }
+  }
 
   seasocks::Server server(
       std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
