@@ -3,8 +3,8 @@
 #include <Eigen/Dense>
 
 struct State {
+  const std::string name;
   Eigen::Vector2d cmd_vel;
-  Eigen::Vector3d position;
 };
 
 /**

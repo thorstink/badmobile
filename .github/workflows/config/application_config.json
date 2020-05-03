@@ -1,0 +1,14 @@
+{
+  "robot": {
+    "name": "The Badmobile",
+    "dimensions": {
+      "track": 0.2,
+      "wheel_diameter_left": 0.05,
+      "wheel_diameter_right": 0.05
+    },
+    "hardware": {
+      "IMU_sampling_frequency": 1000,
+      "IMU_low_pass_cut_off_frequency": 100
+    }
+  }
+}
