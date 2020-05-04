@@ -84,10 +84,15 @@ set(ui_files
   ${CMAKE_CURRENT_SOURCE_DIR}/ui/badmobile.min.js
 )
 
+set(configuration_files
+  ${CMAKE_CURRENT_SOURCE_DIR}/config/application_config.json
+)
+
 set(targets
   ${PROJECT_NAME}_app
   ${PROJECT_NAME}_simulate_app
 )
 
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
+install(FILES ${configuration_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/config)
 install(TARGETS ${targets} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install)

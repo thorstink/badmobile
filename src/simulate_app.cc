@@ -40,8 +40,6 @@ int main(int argc, const char *argv[]) {
     if (i.good()) {
       i >> settings;
     }
-  } else {
-    settings = {{"pi", 3.141}};
   }
 
   rxcpp::composite_subscription lifetime;
@@ -74,7 +72,6 @@ int main(int argc, const char *argv[]) {
 
   setting_updates.subscribe([](const nlohmann::json &s) {
     fmt::print("configuration: {0}", s.dump());
-    std::cout.flush();
   });
 
   seasocks::Server server(
