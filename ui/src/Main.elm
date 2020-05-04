@@ -1,7 +1,9 @@
 port module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, li, p, text, ul)
+import Html exposing (Html,Attribute, div, li, p, text, ul, input, button)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onInput,onClick)
 import Keyboard exposing (Key(..))
 import Style
 import Teleop exposing (..)
@@ -12,7 +14,20 @@ import FakeImu exposing (ImuData, acc, gyr)
 
 port websocketCmdVelIn : (String -> msg) -> Sub msg
 port websocketCmdVelOut : String -> Cmd msg
+port websocketSettingsOut : String -> Cmd msg
 port websocketImuIn : (String -> msg) -> Sub msg
+
+-- ENCODE
+
+encodeRobotName : String -> E.Value
+encodeRobotName name =
+  E.object
+    [ ( "robot"
+      , E.object
+        [ ( "name", E.string name )
+        ] 
+      )
+    ]
 
 {- MODEL -}
 
@@ -23,6 +38,7 @@ type alias Model =
     , action : Action
     , responses : String
     , imu_values : String
+    , name : String
     , input : String
     , t : Int
     , lastImu : ImuData
@@ -38,6 +54,7 @@ init _ =
       , action = DontPublish
       , responses = ""
       , imu_values = "hi2"
+      , name = ""
       , input = ""
       , t = 0
       , lastImu = ImuData 0 0.0 0.0 0.0 0.0 0.0 0.0
@@ -52,6 +69,8 @@ type Msg
   = KeyboardMsg Keyboard.Msg
   | WebsocketCmdVelIn String 
   | WebsocketImuIn String 
+  | Change String
+  | UpdateName
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -108,6 +127,17 @@ update msg model =
             }
           , Cmd.none
           )
+        Change value ->
+          ( { model | name = value }
+          , Cmd.none
+          )
+        UpdateName ->
+          ( model
+          , websocketSettingsOut (E.encode 0 (encodeRobotName model.name))
+          )
+
+
+
 
 {- VIEW -}
 
@@ -138,7 +168,11 @@ view model =
       ,
       div Style.row
       [ div Style.column [ p [] [text ("imu: " ++ imu_reply)]]
-      , div Style.column [ p [] [text "hi3"]]    
+      , div Style.column [   
+        div []
+          [ input [ placeholder "Robot name", value model.name, onInput Change ] []
+          , button [ onClick UpdateName ] [ text "update name" ]
+          ] ]
       ]
     ]
 

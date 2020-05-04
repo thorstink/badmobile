@@ -72,10 +72,6 @@ int main(int argc, const char *argv[]) {
   // initial update
   update_settings(settings);
 
-  // setting_updates.subscribe([](const nlohmann::json &s) {
-  //   fmt::print("configuration: {0}", s.dump());
-  // });
-
   seasocks::Server server(
       std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
 
@@ -93,7 +89,6 @@ int main(int argc, const char *argv[]) {
                        const std::string robot_name = settings["robot"]["name"];
                        return robot_name;
                      }) |
-                     debounce(milliseconds(1000), mainthread) |
                      distinct_until_changed() | replay(1) | ref_count();
 
   /* Store current name in the model
@@ -114,7 +109,7 @@ int main(int argc, const char *argv[]) {
      because it prevents flooding the imu with restarting the whole time.
   */
   auto imuchanges =
-      setting_updates | rxo::map([=](const nlohmann::json & /*settings*/) {
+      setting_updates | rxo::map([](const nlohmann::json & /*settings*/) {
         const int imu_settings = 0;
         return imu_settings;
       }) |
