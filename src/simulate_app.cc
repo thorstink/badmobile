@@ -97,6 +97,8 @@ int main(int argc, const char *argv[]) {
   reducers.push_back(namechanges | rxo::map([](std::string name) {
                        return Reducer([=](State &m) {
                          m.name = name;
+                         fmt::print("name is {0}", m.name);
+                         std::cout.flush();
                          return std::move(m);
                        });
                      }) |
@@ -109,20 +111,23 @@ int main(int argc, const char *argv[]) {
      because it prevents flooding the imu with restarting the whole time.
   */
   auto imuchanges =
-      setting_updates | rxo::map([](const nlohmann::json & /*settings*/) {
-        const int imu_settings = 0;
-        return imu_settings;
+      setting_updates | rxo::map([](const nlohmann::json &settings) {
+        fmt::print("{0}", settings["robot"]["hardware"]["imu"].dump());
+        return settings["robot"]["hardware"]["imu"];
       }) |
       debounce(milliseconds(1000), mainthread) | distinct_until_changed() |
-      tap([](int url) { std::cerr << "url = " << url << std::endl; }) |
       replay(1) | ref_count();
 
-  const auto fake_imu = createFakeImu();
-  fake_imu.map(&to_json)
-      .subscribe_on(workthread)
-      .observe_on(mainthread)
-      .tap([&imu_handle](const nlohmann::json &j) { imu_handle->send(j); })
-      .subscribe();
+  reducers.push_back(imuchanges |
+                     rxo::map([=](const nlohmann::json &imu_settings) {
+                       return createFakeImu(imu_settings) | rxo::map(&to_json) |
+                              observe_on(mainthread) |
+                              tap([imu_handle](const nlohmann::json &j) {
+                                imu_handle->send(j);
+                              }) |
+                              rxo::map([](auto &) { return noop; });
+                     }) |
+                     switch_on_next());
 
   // add websocket handles
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
@@ -149,10 +154,7 @@ int main(int argc, const char *argv[]) {
                 });
 
   // subscribe to start.
-  states | subscribe<State>(lifetime, [](const State &m) {
-    fmt::print("name is {0}", m.name);
-    std::cout.flush();
-  });
+  states | subscribe<State>(lifetime, [](const State &m) {});
 
   // loops
   while (lifetime.is_subscribed() || !rl.empty()) {
