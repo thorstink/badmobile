@@ -99,7 +99,8 @@ int main(int argc, const char *argv[]) {
   imu.map(&to_json)
       .subscribe_on(workthread)
       .observe_on(mainthread)
-      .subscribe([&](const auto &j) { imu_handle->send(j); });
+      .tap([&imu_handle](const nlohmann::json &j) { imu_handle->send(j); })
+      .subscribe();
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
   server.addWebSocketHandler("/imu", imu_handle);

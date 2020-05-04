@@ -1,10 +1,12 @@
 #include "cmd_vel_socket.hpp"
 #include "imu_socket.hpp"
 #include "settings_socket.hpp"
+#include "state.h"
 #include <fmt/format.h>
 #include <fstream>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
+
 using namespace rxcpp;
 using namespace rxcpp::rxo;
 using namespace rxcpp::rxs;
@@ -70,9 +72,9 @@ int main(int argc, const char *argv[]) {
   // initial update
   update_settings(settings);
 
-  setting_updates.subscribe([](const nlohmann::json &s) {
-    fmt::print("configuration: {0}", s.dump());
-  });
+  // setting_updates.subscribe([](const nlohmann::json &s) {
+  //   fmt::print("configuration: {0}", s.dump());
+  // });
 
   seasocks::Server server(
       std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
@@ -82,12 +84,34 @@ int main(int argc, const char *argv[]) {
   const auto cmd_vel_handle = std::make_shared<CmdVelHandler>([] {});
   const auto imu_handle = std::make_shared<ImuHandler>();
 
+  // bla bla reducers
+  std::vector<observable<Reducer>> reducers;
+
+  /* change the name of the robot */
+  auto namechanges = setting_updates |
+                     rxo::map([](const nlohmann::json &settings) {
+                       const std::string robot_name = settings["robot"]["name"];
+                       return robot_name;
+                     }) |
+                     debounce(milliseconds(1000), mainthread) |
+                     distinct_until_changed() | replay(1) | ref_count();
+
+  /* Store current name in the model
+      Take changes to the name and save the current name in the model.
+  */
+  reducers.push_back(namechanges | rxo::map([](std::string name) {
+                       return Reducer([=](State &m) {
+                         m.name = name;
+                         return std::move(m);
+                       });
+                     }) |
+                     start_with(noop));
+
   /* filter settings updates to changes that change the configuration for the
      imu-sensor stream. distinct_until_changed is used to filter out settings
      updates that do not change the url debounce is used to wait until the
      updates pause before signaling the url has changed. this is important
-     since typing in keywords would cause many intermediate changes to the url
-     and twitter rate limits the user if there are too many fast restarts.
+     because it prevents flooding the imu with restarting the whole time.
   */
   auto imuchanges =
       setting_updates | rxo::map([=](const nlohmann::json & /*settings*/) {
@@ -102,14 +126,38 @@ int main(int argc, const char *argv[]) {
   fake_imu.map(&to_json)
       .subscribe_on(workthread)
       .observe_on(mainthread)
-      .subscribe([&](const auto &j) { imu_handle->send(j); });
+      .tap([&imu_handle](const nlohmann::json &j) { imu_handle->send(j); })
+      .subscribe();
 
+  // add websocket handles
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
   server.addWebSocketHandler("/settings", settings_handle);
   server.addWebSocketHandler("/imu", imu_handle);
 
   server.startListening(2222);
   server.setStaticPath("ui");
+
+  // combine things that modify the model
+  auto states = iterate(reducers) |
+                // give the reducers to the mainthread
+                merge(mainthread) |
+                // apply things that modify the model
+                scan(State{}, [=](State &m, Reducer &f) {
+                  try {
+                    auto r = f(m);
+                    r.timestamp = mainthread.now();
+                    return r;
+                  } catch (const std::exception &e) {
+                    std::cerr << e.what() << std::endl;
+                    return std::move(m);
+                  }
+                });
+
+  // subscribe to start.
+  states | subscribe<State>(lifetime, [](const State &m) {
+    fmt::print("name is {0}", m.name);
+    std::cout.flush();
+  });
 
   // loops
   while (lifetime.is_subscribed() || !rl.empty()) {

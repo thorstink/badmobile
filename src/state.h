@@ -1,10 +1,13 @@
 #pragma once
 
 #include <Eigen/Dense>
+#include <chrono>
+#include <functional>
+#include <string>
 
 struct State {
-  const std::string name;
-  Eigen::Vector2d cmd_vel;
+  std::string name;
+  std::chrono::steady_clock::time_point timestamp;
 };
 
 /**
@@ -14,3 +17,6 @@ struct State {
  * @return State
  */
 State update(State state) { return state; }
+
+using Reducer = std::function<State(State &)>;
+auto noop = Reducer([](State &m) { return std::move(m); });
