@@ -1,5 +1,6 @@
 #include "cmd_vel_socket.hpp"
 #include "imu_socket.hpp"
+#include "settings_socket.hpp"
 #include <fmt/format.h>
 #include <fstream>
 #include <seasocks/PrintfLogger.h>
@@ -7,6 +8,7 @@
 using namespace rxcpp;
 using namespace rxcpp::rxo;
 using namespace rxcpp::rxs;
+using namespace std::chrono;
 
 // @TODO come up with a compelling reason why this shouldn't be here.
 std::string settingsFile;
@@ -38,6 +40,8 @@ int main(int argc, const char *argv[]) {
     if (i.good()) {
       i >> settings;
     }
+  } else {
+    settings = {{"pi", 3.141}};
   }
 
   rxcpp::composite_subscription lifetime;
@@ -65,11 +69,38 @@ int main(int argc, const char *argv[]) {
     }
   };
 
+  // initial update
+  update_settings(settings);
+
+  setting_updates.subscribe([](const nlohmann::json &s) {
+    fmt::print("configuration: {0}", s.dump());
+    std::cout.flush();
+  });
+
   seasocks::Server server(
       std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
 
+  const auto settings_handle =
+      std::make_shared<SettingsHandler>(update_settings);
   const auto cmd_vel_handle = std::make_shared<CmdVelHandler>([] {});
   const auto imu_handle = std::make_shared<ImuHandler>();
+
+  /* filter settings updates to changes that change the configuration for the
+     imu-sensor stream. distinct_until_changed is used to filter out settings
+     updates that do not change the url debounce is used to wait until the
+     updates pause before signaling the url has changed. this is important
+     since typing in keywords would cause many intermediate changes to the url
+     and twitter rate limits the user if there are too many fast restarts.
+  */
+  auto imuchanges =
+      setting_updates | rxo::map([=](const nlohmann::json & /*settings*/) {
+        const int imu_settings = 0;
+        return imu_settings;
+      }) |
+      debounce(milliseconds(1000), mainthread) | distinct_until_changed() |
+      tap([](int url) { std::cerr << "url = " << url << std::endl; }) |
+      replay(1) | ref_count();
+
   const auto fake_imu = createFakeImu();
   fake_imu.map(&to_json)
       .subscribe_on(workthread)
@@ -77,6 +108,7 @@ int main(int argc, const char *argv[]) {
       .subscribe([&](const auto &j) { imu_handle->send(j); });
 
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
+  server.addWebSocketHandler("/settings", settings_handle);
   server.addWebSocketHandler("/imu", imu_handle);
 
   server.startListening(2222);
