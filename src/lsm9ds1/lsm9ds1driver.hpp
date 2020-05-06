@@ -125,7 +125,8 @@ createLSM9DS1Observable(const nlohmann::json &imu_settings) {
     // driver setup
     std::chrono::time_point<std::chrono::steady_clock> now;
     std::chrono::time_point<std::chrono::steady_clock> wakeup_time;
-    const auto delta = std::chrono::microseconds(1000000 / fs);
+    const auto delta =
+        std::chrono::microseconds(int64_t(1000000.0 / double(fs)));
 
     struct xyz acc;
     struct xyz gyr;

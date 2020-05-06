@@ -88,6 +88,9 @@ int main(int argc, const char *argv[]) {
     }
   };
 
+  // initial update
+  update_settings(settings);
+
   // init gpio
   if (gpioInitialise() < 0)
     std::exception_ptr();
@@ -107,6 +110,9 @@ int main(int argc, const char *argv[]) {
 
   /* change the name of the robot */
   auto namechanges = setting_updates |
+                     //  rxo::filter([](const nlohmann::json &settings) {
+                     //    return settings.contains("name");
+                     //  }) |
                      rxo::map([](const nlohmann::json &settings) {
                        const std::string robot_name = settings["robot"]["name"];
                        return robot_name;
@@ -132,18 +138,21 @@ int main(int argc, const char *argv[]) {
      updates pause before signaling the url has changed. this is important
      because it prevents flooding the imu with restarting the whole time.
   */
-  auto imuchanges =
-      setting_updates | rxo::map([](const nlohmann::json &settings) {
-        fmt::print("{0}", settings["robot"]["hardware"]["imu"].dump());
-        return settings["robot"]["hardware"]["imu"];
-      }) |
-      debounce(milliseconds(1000), mainthread) | distinct_until_changed() |
-      replay(1) | ref_count();
+  auto imuchanges = setting_updates |
+                    // rxo::filter([](const nlohmann::json &settings) {
+                    //   return settings.contains("imu");
+                    // }) |
+                    rxo::map([](const nlohmann::json &settings) {
+                      return settings["robot"]["hardware"]["imu"];
+                    }) |
+                    debounce(milliseconds(1000), mainthread) |
+                    distinct_until_changed() | replay(1) | ref_count();
 
   reducers.push_back(imuchanges |
                      rxo::map([=](const nlohmann::json &imu_settings) {
                        return createLSM9DS1Observable(imu_settings) |
-                              rxo::map(&to_json) | observe_on(mainthread) |
+                              subscribe_on(workthread) | rxo::map(&to_json) |
+                              observe_on(mainthread) |
                               tap([imu_handle](const nlohmann::json &j) {
                                 imu_handle->send(j);
                               }) |
