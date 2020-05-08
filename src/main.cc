@@ -81,8 +81,11 @@ int main(int argc, const char *argv[]) {
   // call update_settings() to save changes and trigger parties interested in
   // the change
   auto update_settings = [sendsettings, sf](nlohmann::json s) {
-    std::fstream o(sf);
-    o << std::setw(4) << s;
+    // don't write to persistance file yet.. because we dont save a proper
+    // file..
+    //  std::fstream o(sf);
+    // o << std::setw(4) << s;
+
     if (sendsettings.is_subscribed()) {
       sendsettings.on_next(s);
     }
@@ -140,18 +143,9 @@ int main(int argc, const char *argv[]) {
      updates pause before signaling the url has changed. this is important
      because it prevents flooding the imu with restarting the whole time.
   */
-  auto imuchanges =
-      setting_updates | rxo::filter([](const nlohmann::json &settings) {
-        const bool valid = settings.contains("robot") &&
-                           settings["robot"].contains("hardware") &&
-                           settings["robot"]["hardware"].contains("imu");
-        return valid;
-      }) |
-      rxo::map([](const nlohmann::json &settings) {
-        return settings["robot"]["hardware"]["imu"];
-      }) |
-      debounce(milliseconds(1000), mainthread) | distinct_until_changed() |
-      replay(1) | ref_count();
+  auto imuchanges = setting_updates | rxo::filter(&lsm9ds1::containsImuConfig) |
+                    debounce(milliseconds(1000), mainthread) |
+                    distinct_until_changed() | replay(1) | ref_count();
 
   reducers.push_back(imuchanges |
                      rxo::map([=](const nlohmann::json &imu_settings) {
