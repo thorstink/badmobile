@@ -146,6 +146,17 @@ int main(int argc, const char *argv[]) {
                      }) |
                      switch_on_next());
 
+  // stream of effects
+  reducers.push_back(
+      effects_sink.get_observable() | rxo::map([](const Effect &effect) {
+        try {
+          effect();
+        } catch (const std::exception &e) {
+          std::cerr << "Exception in effects: " << e.what() << std::endl;
+        }
+        return noop;
+      }));
+
   // add websocket handles
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
   server.addWebSocketHandler("/settings", settings_handle);
@@ -155,37 +166,25 @@ int main(int argc, const char *argv[]) {
   server.setStaticPath("ui");
 
   // combine things that modify the model
-  auto states = iterate(reducers) |
-                // give the reducers to the mainthread
-                merge(mainthread) |
-                // apply things that modify the model
-                scan(State{}, [=](State &m, Reducer &f) {
-                  try {
-                    auto r = f(m);
-                    r.timestamp = mainthread.now();
-                    return r;
-                  } catch (const std::exception &e) {
-                    std::cerr << "Exception in reducers: " << e.what()
-                              << std::endl;
-                    return std::move(m);
-                  }
-                });
-
-  // stream of effects
-  auto effects =
-      effects_sink.get_observable() | rxo::map([](const Effect &effect) {
-        try {
-          effect();
-          return true;
-        } catch (const std::exception &e) {
-          std::cerr << "Exception in effects: " << e.what() << std::endl;
-          return false;
-        }
-      });
+  auto states =
+      iterate(reducers) |
+      // give the reducers to the mainthread
+      merge(mainthread) |
+      // apply things that modify the model
+      scan(State{settings, settings["robot"]["name"], mainthread.now()},
+           [=](State &m, Reducer &f) {
+             try {
+               auto r = f(m);
+               r.timestamp = mainthread.now();
+               return r;
+             } catch (const std::exception &e) {
+               std::cerr << "Exception in reducers: " << e.what() << std::endl;
+               return std::move(m);
+             }
+           });
 
   // subscribe to start.
   states | subscribe<State>(lifetime, [](const State &) {});
-  effects | subscribe<bool>(lifetime, [](const bool &) {});
 
   // loops
   while (lifetime.is_subscribed() || !rl.empty()) {

@@ -1,11 +1,13 @@
 #pragma once
 
+#include "nlohmann/json.hpp"
 #include <Eigen/Dense>
 #include <chrono>
 #include <functional>
 #include <string>
 
 struct State {
+  nlohmann::json settings;
   std::string name;
   std::chrono::steady_clock::time_point timestamp;
 };
