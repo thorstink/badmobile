@@ -7,6 +7,7 @@ import Html.Events exposing (onInput,onClick)
 import Keyboard exposing (Key(..))
 import Style
 import Teleop exposing (..)
+import Robotconfig exposing (..)
 import Json.Decode as D
 import Json.Encode as E
 import ImuViz 
