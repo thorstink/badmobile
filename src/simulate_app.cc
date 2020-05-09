@@ -172,17 +172,16 @@ int main(int argc, const char *argv[]) {
                 });
 
   // stream of effects
-  auto effects = effects_sink.get_observable() | subscribe_on(workthread) |
-                 rxo::map([](const Effect &effect) {
-                   try {
-                     effect();
-                     return true;
-                   } catch (const std::exception &e) {
-                     std::cerr << "Exception in effects: " << e.what()
-                               << std::endl;
-                     return false;
-                   }
-                 });
+  auto effects =
+      effects_sink.get_observable() | rxo::map([](const Effect &effect) {
+        try {
+          effect();
+          return true;
+        } catch (const std::exception &e) {
+          std::cerr << "Exception in effects: " << e.what() << std::endl;
+          return false;
+        }
+      });
 
   // subscribe to start.
   states | subscribe<State>(lifetime, [](const State &) {});
