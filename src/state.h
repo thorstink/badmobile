@@ -19,4 +19,5 @@ struct State {
 State update(State state) { return state; }
 
 using Reducer = std::function<State(State &)>;
+using Effect = std::function<void()>;
 auto noop = Reducer([](State &m) { return std::move(m); });

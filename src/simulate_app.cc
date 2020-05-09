@@ -15,6 +15,13 @@ using namespace std::chrono;
 // @TODO come up with a compelling reason why this shouldn't be here.
 std::string settingsFile;
 nlohmann::json settings;
+
+// hmm globals.
+// Action sink (for side effects and what not)
+rxsub::subject<Effect> effects_sink;
+const auto effecttout = effects_sink.get_subscriber();
+const auto dispatchEffect = [](auto &&f) { effecttout.on_next(f); };
+
 int main(int argc, const char *argv[]) {
 
   auto command = std::string{};
@@ -50,15 +57,18 @@ int main(int argc, const char *argv[]) {
   auto mainthread = observe_on_run_loop(rl);
   auto workthread = rxcpp::observe_on_new_thread();
 
+  auto dispatch_effect = effects_sink.get_subscriber();
+
   /* make changes to settings observable
-     This allows setting changes to be composed into the expressions to
-     reconfigure them.
+     This allows setting changes to be composed into the
+     expressions to reconfigure them.
   */
   rxsub::replay<nlohmann::json, decltype(mainthread)> setting_update(
       1, mainthread, lifetime);
   auto setting_updates = setting_update.get_observable();
   auto sendsettings = setting_update.get_subscriber();
   auto sf = settingsFile;
+
   // call update_settings() to save changes and trigger parties interested in
   // the change
   auto update_settings = [sendsettings, sf](nlohmann::json s) {
@@ -104,8 +114,11 @@ int main(int argc, const char *argv[]) {
   reducers.push_back(namechanges | rxo::map([](std::string name) {
                        return Reducer([=](State &m) {
                          m.name = name;
-                         fmt::print("name is {0}", m.name);
-                         std::cout.flush();
+                         //
+                         dispatchEffect([=]() {
+                           fmt::print("in actions name is {0}", m.name);
+                           std::cout.flush();
+                         });
                          return std::move(m);
                        });
                      }) |
@@ -152,13 +165,28 @@ int main(int argc, const char *argv[]) {
                     r.timestamp = mainthread.now();
                     return r;
                   } catch (const std::exception &e) {
-                    std::cerr << e.what() << std::endl;
+                    std::cerr << "Exception in reducers: " << e.what()
+                              << std::endl;
                     return std::move(m);
                   }
                 });
 
+  // stream of effects
+  auto effects = effects_sink.get_observable() | subscribe_on(workthread) |
+                 rxo::map([](const Effect &effect) {
+                   try {
+                     effect();
+                     return true;
+                   } catch (const std::exception &e) {
+                     std::cerr << "Exception in effects: " << e.what()
+                               << std::endl;
+                     return false;
+                   }
+                 });
+
   // subscribe to start.
-  states | subscribe<State>(lifetime, [](const State &m) {});
+  states | subscribe<State>(lifetime, [](const State &) {});
+  effects | subscribe<bool>(lifetime, [](const bool &) {});
 
   // loops
   while (lifetime.is_subscribed() || !rl.empty()) {

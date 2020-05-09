@@ -68,6 +68,7 @@ int main(int argc, const char *argv[]) {
   schedulers::run_loop rl;
   auto mainthread = observe_on_run_loop(rl);
   auto workthread = rxcpp::observe_on_new_thread();
+  auto actionthread = rxcpp::observe_on_new_thread();
 
   /* make changes to settings observable
      This allows setting changes to be composed into the expressions to
