@@ -8,7 +8,7 @@
     },
     "hardware": {
       "imu": {
-        "sampling_frequency": 10,
+        "sampling_frequency": 200,
         "low_pass_cut_off_frequency": 100,
         "SCLK": 11,
         "MOSI": 10,

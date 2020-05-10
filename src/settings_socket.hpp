@@ -41,7 +41,7 @@ struct SettingsHandler : seasocks::WebSocket::Handler {
   }
 
   void send(const nlohmann::json &r) const {
-    fmt::print("Forwarding settings data to user");
+    fmt::print("Forwarding settings data to users");
     std::cout.flush();
     for (auto *con : _cons) {
       con->send(r.dump());

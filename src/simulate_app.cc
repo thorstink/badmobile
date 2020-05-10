@@ -72,10 +72,6 @@ int main(int argc, const char *argv[]) {
   // call update_settings() to save changes and trigger parties interested in
   // the change
   auto update_settings = [sendsettings, sf](nlohmann::json s) {
-    // don't write to persistance file yet.. because we dont save a proper
-    // file..
-    //  std::fstream o(sf);
-    // o << std::setw(4) << s;
     if (sendsettings.is_subscribed()) {
       sendsettings.on_next(s);
     }
@@ -111,9 +107,11 @@ int main(int argc, const char *argv[]) {
   reducers.push_back(namechanges | rxo::map([](std::string name) {
                        return Reducer([=](State &m) {
                          m.name = name;
+                         m.settings["robot"]["name"] = name;
                          //
                          dispatchEffect([=]() {
                            fmt::print("in actions name is {0}", m.name);
+                           // return updated settings to interface
                            std::cout.flush();
                          });
                          return std::move(m);
@@ -189,6 +187,19 @@ int main(int argc, const char *argv[]) {
       send_settings_on_connection, update_settings);
 
   const auto cmd_vel_handle = std::make_shared<CmdVelHandler>([] {});
+
+  // if settings/config is updated. Forward to everyone listening.
+  states | rxo::map([](const State &m) { return m.settings; }) |
+      distinct_until_changed() | rxo::filter(&robot::robotConfigValid) |
+      tap([settings_handle](const nlohmann::json &c) {
+        settings_handle->send(c);
+        dispatchEffect([=]() {
+          // write to file for persistency
+          std::fstream o(settingsFile);
+          o << std::setw(4) << c;
+        });
+      }) |
+      subscribe<nlohmann::json>(lifetime, [](const nlohmann::json &) {});
 
   // add websocket handles
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
