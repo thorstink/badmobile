@@ -87,9 +87,6 @@ int main(int argc, const char *argv[]) {
   seasocks::Server server(
       std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
 
-  const auto settings_handle =
-      std::make_shared<SettingsHandler>(update_settings);
-  const auto cmd_vel_handle = std::make_shared<CmdVelHandler>([] {});
   const auto imu_handle = std::make_shared<ImuHandler>();
 
   // bla bla reducers
@@ -146,7 +143,10 @@ int main(int argc, const char *argv[]) {
                      }) |
                      switch_on_next());
 
-  // stream of effects
+  /**
+   * Stream of effects. For now effects do not update the state.
+   *
+   */
   reducers.push_back(
       effects_sink.get_observable() | rxo::map([](const Effect &effect) {
         try {
@@ -156,14 +156,6 @@ int main(int argc, const char *argv[]) {
         }
         return noop;
       }));
-
-  // add websocket handles
-  server.addWebSocketHandler("/cmd", cmd_vel_handle);
-  server.addWebSocketHandler("/settings", settings_handle);
-  server.addWebSocketHandler("/imu", imu_handle);
-
-  server.startListening(2222);
-  server.setStaticPath("ui");
 
   // combine things that modify the model
   auto states =
@@ -181,10 +173,30 @@ int main(int argc, const char *argv[]) {
                std::cerr << "Exception in reducers: " << e.what() << std::endl;
                return std::move(m);
              }
-           });
+           }) |
+      publish() | ref_count();
 
   // subscribe to start.
   states | subscribe<State>(lifetime, [](const State &) {});
+
+  const auto send_settings_on_connection = [states](seasocks::WebSocket *con) {
+    states | take(1) | tap([=](const State &m) {
+      dispatchEffect([=]() { con->send(m.settings.dump()); });
+    }) | subscribe<State>();
+  };
+
+  const auto settings_handle = std::make_shared<SettingsHandler>(
+      send_settings_on_connection, update_settings);
+
+  const auto cmd_vel_handle = std::make_shared<CmdVelHandler>([] {});
+
+  // add websocket handles
+  server.addWebSocketHandler("/cmd", cmd_vel_handle);
+  server.addWebSocketHandler("/settings", settings_handle);
+  server.addWebSocketHandler("/imu", imu_handle);
+
+  server.startListening(2222);
+  server.setStaticPath("ui");
 
   // loops
   while (lifetime.is_subscribed() || !rl.empty()) {

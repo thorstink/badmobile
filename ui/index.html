@@ -27,10 +27,10 @@
     app.ports.websocketCmdVelOut.subscribe(function (msg) { ws_cmd.send(msg); });
 
     var ws_settings = new WebSocket('ws://' + window.location.host + '/settings');
-    // ws_settings.onmessage = function (message) {
-    //   console.log(message);
-    //   app.ports.websocketSettingsIn.send(message.data);
-    // };
+    ws_settings.onmessage = function (message) {
+      console.log(message);
+      app.ports.websocketSettingsIn.send(message.data);
+    };
     app.ports.websocketSettingsOut.subscribe(function (msg) { ws_settings.send(msg); });
 
     var ws_imu = new WebSocket('ws://' + window.location.host + '/imu');

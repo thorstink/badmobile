@@ -104,8 +104,8 @@ int main(int argc, const char *argv[]) {
 
   toggleLed led_iface(LED);
 
-  const auto settings_handle =
-      std::make_shared<SettingsHandler>(update_settings);
+  // const auto settings_handle =
+  //     std::make_shared<SettingsHandler>([]() {}, update_settings);
   const auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
   const auto imu_handle = std::make_shared<ImuHandler>();
 
@@ -162,7 +162,7 @@ int main(int argc, const char *argv[]) {
 
   // add websocket handles
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
-  server.addWebSocketHandler("/settings", settings_handle);
+  // server.addWebSocketHandler("/settings", settings_handle);
   server.addWebSocketHandler("/imu", imu_handle);
 
   server.startListening(2222);

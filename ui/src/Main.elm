@@ -16,6 +16,7 @@ import FakeImu exposing (ImuData, acc, gyr)
 port websocketCmdVelIn : (String -> msg) -> Sub msg
 port websocketCmdVelOut : String -> Cmd msg
 port websocketSettingsOut : String -> Cmd msg
+port websocketSettingsIn : (String -> msg) -> Sub msg
 port websocketImuIn : (String -> msg) -> Sub msg
 
 -- ENCODE
@@ -44,6 +45,7 @@ type alias Model =
     , t : Int
     , lastImu : ImuData
     , imuDatas : List ImuData
+    , settings : Int
     }
 
 
@@ -60,6 +62,7 @@ init _ =
       , t = 0
       , lastImu = ImuData 0 0.0 0.0 0.0 0.0 0.0 0.0
       , imuDatas = []
+      , settings = 0
       }
     , Cmd.none
     )
@@ -70,6 +73,7 @@ type Msg
   = KeyboardMsg Keyboard.Msg
   | WebsocketCmdVelIn String 
   | WebsocketImuIn String 
+  | WebsocketSettingsIn String 
   | Change String
   | UpdateName
 
@@ -128,6 +132,10 @@ update msg model =
             }
           , Cmd.none
           )
+        WebsocketSettingsIn value ->
+          ( { model | settings = 1 }
+            , Cmd.none
+          )
         Change value ->
           ( { model | name = value }
           , Cmd.none
@@ -173,6 +181,7 @@ view model =
         div []
           [ input [ placeholder "Robot name", value model.name, onInput Change ] []
           , button [ onClick UpdateName ] [ text "update name" ]
+          , p []  [text ("robotconfig: " ++ (model.settings |> String.fromInt)) ] 
           ] ]
       ]
     ]
@@ -182,7 +191,7 @@ view model =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch [Sub.map KeyboardMsg Keyboard.subscriptions, websocketCmdVelIn WebsocketCmdVelIn, websocketImuIn WebsocketImuIn]
+    Sub.batch [Sub.map KeyboardMsg Keyboard.subscriptions, websocketCmdVelIn WebsocketCmdVelIn, websocketImuIn WebsocketImuIn, websocketSettingsIn WebsocketSettingsIn]
 
 main : Program () Model Msg
 main =
