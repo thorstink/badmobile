@@ -45,7 +45,7 @@ type alias Model =
     , t : Int
     , lastImu : ImuData
     , imuDatas : List ImuData
-    , settings : Int
+    , robotConfig : Maybe RobotConfig
     }
 
 
@@ -62,7 +62,7 @@ init _ =
       , t = 0
       , lastImu = ImuData 0 0.0 0.0 0.0 0.0 0.0 0.0
       , imuDatas = []
-      , settings = 0
+      , robotConfig = Nothing
       }
     , Cmd.none
     )
@@ -133,7 +133,11 @@ update msg model =
           , Cmd.none
           )
         WebsocketSettingsIn value ->
-          ( { model | settings = 1 }
+          ( { model | robotConfig = case (D.decodeString decodeConfig value) of
+                                      Ok config -> Just config.robot
+                                      _ -> Nothing
+
+            }
             , Cmd.none
           )
         Change value ->
@@ -160,6 +164,14 @@ view model =
       imu_reply = case (D.decodeString ImuViz.replyImuDecoder model.imu_values) of
                 Ok value -> "ax: " ++ (value.ax |> String.fromFloat) ++ ", ay: " ++ (value.ay |> String.fromFloat) ++ ", az: " ++ (value.az |> String.fromFloat) ++ "gx: " ++ (value.gx |> String.fromFloat) ++ ", gy: " ++ (value.gy |> String.fromFloat) ++ ", gz: " ++ (value.gz |> String.fromFloat)
                 _ -> "not a valid json"
+      
+      sampling_frequency = case model.robotConfig of 
+                              Just config -> config.hardware.imu.sampling_frequency |> String.fromInt
+                              Nothing  -> "no configuration available"
+
+      led = case model.robotConfig of
+                              Just config -> config.hardware.led.gpio |> String.fromInt
+                              Nothing  -> "no configuration available"
 
       lin_x = model.twist.linear_x |> String.fromFloat
       ang_z = model.twist.angular_z |> String.fromFloat
@@ -181,7 +193,8 @@ view model =
         div []
           [ input [ placeholder "Robot name", value model.name, onInput Change ] []
           , button [ onClick UpdateName ] [ text "update name" ]
-          , p []  [text ("robotconfig: " ++ (model.settings |> String.fromInt)) ] 
+          , p []  [text ("robotconfig imu frequency: " ++ sampling_frequency) ] 
+          , p []  [text ("robotconfig led GPIO: " ++ led) ] 
           ] ]
       ]
     ]

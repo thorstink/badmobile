@@ -45,6 +45,11 @@ type alias RobotConfig =
   , hardware: Hardware
   }
 
+type alias Config = 
+  {
+    robot: RobotConfig
+  }
+
 -- Json Decode and Encode
 
 -- Decode all the bits
@@ -52,7 +57,7 @@ decodeDifferentialDriveParameters : Decoder DifferentialDriveParameters
 decodeDifferentialDriveParameters =
     Decode.succeed DifferentialDriveParameters
         |> required "track" float
-        |> required "wheel_diameft" float
+        |> required "wheel_diameter_left" float
         |> required "wheel_diameter_right" float
 
 decodeImu : Decoder Imu
@@ -60,16 +65,16 @@ decodeImu =
     Decode.succeed Imu
         |> required "sampling_frequency" int
         |> required "low_pass_cut_off_frequency" int
-        |> required "sclk" int
-        |> required "mosi" int
-        |> required "miso" int
-        |> required "csag" int
+        |> required "SCLK" int
+        |> required "MOSI" int
+        |> required "MISO" int
+        |> required "CSAG" int
 
 decodeMotor : Decoder Motor
 decodeMotor =
     Decode.succeed Motor
-        |> required "pwm_gpio_forward" int
-        |> required "pwm_gpio_reverse" int
+        |> required "PWM_GPIO_FORWARD" int
+        |> required "PWM_GPIO_REVERSE" int
 
 decodeLed : Decoder Led
 decodeLed =
@@ -90,5 +95,13 @@ decodeRobotConfig =
         |> required "name" string
         |> required "differential_drive_parameters" decodeDifferentialDriveParameters
         |> required "hardware" decodeHardware
+
+decodeConfig : Decoder Config
+decodeConfig =
+    Decode.succeed Config
+        |> required "robot" decodeRobotConfig
+
+
+
 
 -- Encode
