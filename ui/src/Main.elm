@@ -151,9 +151,6 @@ update msg model =
           , websocketSettingsOut (E.encode 0 (encodeRobotName model.name))
           )
 
-
-
-
 {- VIEW -}
 
 view : Model -> Html Msg
@@ -164,7 +161,7 @@ view model =
                 _ -> "not a valid json"
 
       imu_reply = case (D.decodeString ImuViz.replyImuDecoder model.imu_values) of
-                Ok value -> "ax: " ++ (value.ax |> String.fromFloat) ++ ", ay: " ++ (value.ay |> String.fromFloat) ++ ", az: " ++ (value.az |> String.fromFloat) ++ "gx: " ++ (value.gx |> String.fromFloat) ++ ", gy: " ++ (value.gy |> String.fromFloat) ++ ", gz: " ++ (value.gz |> String.fromFloat)
+                Ok value -> "t: " ++ (value.t |> String.fromInt) ++ ", ax: " ++ (value.ax |> String.fromFloat) ++ ", ay: " ++ (value.ay |> String.fromFloat) ++ ", az: " ++ (value.az |> String.fromFloat) ++ "gx: " ++ (value.gx |> String.fromFloat) ++ ", gy: " ++ (value.gy |> String.fromFloat) ++ ", gz: " ++ (value.gz |> String.fromFloat)
                 _ -> "not a valid json"
       
       sampling_frequency = case model.robotConfig of 
