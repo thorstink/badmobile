@@ -1,12 +1,10 @@
 #include "cmd_vel_socket.hpp"
 #include "imu_socket.hpp"
 #include "lsm9ds1/lsm9ds1driver.hpp"
-#include "nlohmann/json.hpp"
 #include "settings_socket.hpp"
 #include "state.h"
 #include <fmt/format.h>
 #include <fstream>
-#include <iostream>
 #include <pigpio.h>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
@@ -33,6 +31,12 @@ struct toggleLed {
 // @TODO come up with a compelling reason why this shouldn't be here.
 std::string settingsFile;
 nlohmann::json settings;
+
+// hmm globals.
+// Action sink (for side effects and what not)
+rxsub::subject<Effect> effects_sink;
+const auto effecttout = effects_sink.get_subscriber();
+const auto dispatchEffect = [](auto &&f) { effecttout.on_next(f); };
 
 int main(int argc, const char *argv[]) {
 
@@ -68,25 +72,22 @@ int main(int argc, const char *argv[]) {
   schedulers::run_loop rl;
   auto mainthread = observe_on_run_loop(rl);
   auto workthread = rxcpp::observe_on_new_thread();
-  auto actionthread = rxcpp::observe_on_new_thread();
+
+  auto dispatch_effect = effects_sink.get_subscriber();
 
   /* make changes to settings observable
-     This allows setting changes to be composed into the expressions to
-     reconfigure them.
+     This allows setting changes to be composed into the
+     expressions to reconfigure them.
   */
   rxsub::replay<nlohmann::json, decltype(mainthread)> setting_update(
       1, mainthread, lifetime);
   auto setting_updates = setting_update.get_observable();
   auto sendsettings = setting_update.get_subscriber();
   auto sf = settingsFile;
+
   // call update_settings() to save changes and trigger parties interested in
   // the change
   auto update_settings = [sendsettings, sf](nlohmann::json s) {
-    // don't write to persistance file yet.. because we dont save a proper
-    // file..
-    //  std::fstream o(sf);
-    // o << std::setw(4) << s;
-
     if (sendsettings.is_subscribed()) {
       sendsettings.on_next(s);
     }
@@ -99,14 +100,11 @@ int main(int argc, const char *argv[]) {
   if (gpioInitialise() < 0)
     std::exception_ptr();
 
+  toggleLed led_iface(LED);
+
   seasocks::Server server(
       std::make_shared<seasocks::PrintfLogger>(seasocks::Logger::Level::Error));
 
-  toggleLed led_iface(LED);
-
-  // const auto settings_handle =
-  //     std::make_shared<SettingsHandler>([]() {}, update_settings);
-  const auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
   const auto imu_handle = std::make_shared<ImuHandler>();
 
   // bla bla reducers
@@ -131,8 +129,13 @@ int main(int argc, const char *argv[]) {
   reducers.push_back(namechanges | rxo::map([](std::string name) {
                        return Reducer([=](State &m) {
                          m.name = name;
-                         fmt::print("name is {0}", m.name);
-                         std::cout.flush();
+                         m.settings["robot"]["name"] = name;
+                         //
+                         dispatchEffect([=]() {
+                           fmt::print("in actions name is {0}", m.name);
+                           // return updated settings to interface
+                           std::cout.flush();
+                         });
                          return std::move(m);
                        });
                      }) |
@@ -160,32 +163,73 @@ int main(int argc, const char *argv[]) {
                      }) |
                      switch_on_next());
 
+  /**
+   * Stream of effects. For now effects do not update the state.
+   *
+   */
+  reducers.push_back(
+      effects_sink.get_observable() | rxo::map([](const Effect &effect) {
+        try {
+          effect();
+        } catch (const std::exception &e) {
+          std::cerr << "Exception in effects: " << e.what() << std::endl;
+        }
+        return noop;
+      }));
+
+  // combine things that modify the model
+  auto states =
+      iterate(reducers) |
+      // give the reducers to the mainthread
+      merge(mainthread) |
+      // apply things that modify the model
+      scan(State{settings, settings["robot"]["name"], mainthread.now()},
+           [=](State &m, Reducer &f) {
+             try {
+               auto r = f(m);
+               r.timestamp = mainthread.now();
+               return r;
+             } catch (const std::exception &e) {
+               std::cerr << "Exception in reducers: " << e.what() << std::endl;
+               return std::move(m);
+             }
+           }) |
+      publish() | ref_count();
+
+  // subscribe to start.
+  states | subscribe<State>(lifetime, [](const State &) {});
+
+  const auto send_settings_on_connection = [states](seasocks::WebSocket *con) {
+    states | take(1) | tap([=](const State &m) {
+      dispatchEffect([=]() { con->send(m.settings.dump()); });
+    }) | subscribe<State>();
+  };
+
+  const auto settings_handle = std::make_shared<SettingsHandler>(
+      send_settings_on_connection, update_settings);
+
+  const auto cmd_vel_handle = std::make_shared<CmdVelHandler>(led_iface);
+
+  // if settings/config is updated. Forward to everyone listening.
+  states | rxo::map([](const State &m) { return m.settings; }) |
+      distinct_until_changed() | rxo::filter(&robot::robotConfigValid) |
+      tap([settings_handle](const nlohmann::json &c) {
+        settings_handle->send(c);
+        dispatchEffect([=]() {
+          // write to file for persistency
+          std::fstream o(settingsFile);
+          o << std::setw(4) << c;
+        });
+      }) |
+      subscribe<nlohmann::json>(lifetime, [](const nlohmann::json &) {});
+
   // add websocket handles
   server.addWebSocketHandler("/cmd", cmd_vel_handle);
-  // server.addWebSocketHandler("/settings", settings_handle);
+  server.addWebSocketHandler("/settings", settings_handle);
   server.addWebSocketHandler("/imu", imu_handle);
 
   server.startListening(2222);
   server.setStaticPath("ui");
-
-  // combine things that modify the model
-  auto states = iterate(reducers) |
-                // give the reducers to the mainthread
-                merge(mainthread) |
-                // apply things that modify the model
-                scan(State{}, [=](State &m, Reducer &f) {
-                  try {
-                    auto r = f(m);
-                    r.timestamp = mainthread.now();
-                    return r;
-                  } catch (const std::exception &e) {
-                    std::cerr << e.what() << std::endl;
-                    return std::move(m);
-                  }
-                });
-
-  // subscribe to start.
-  states | subscribe<State>(lifetime, [](const State &m) {});
 
   // loops
   while (lifetime.is_subscribed() || !rl.empty()) {
