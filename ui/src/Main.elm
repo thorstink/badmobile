@@ -136,7 +136,9 @@ update msg model =
           ( { model | robotConfig = case (D.decodeString decodeConfig value) of
                                       Ok config -> Just config.robot
                                       _ -> Nothing
-
+                    , name = case (D.decodeString decodeConfig value) of
+                                      Ok config -> config.robot.name
+                                      _ -> "no configuration available"
             }
             , Cmd.none
           )
@@ -168,6 +170,10 @@ view model =
       sampling_frequency = case model.robotConfig of 
                               Just config -> config.hardware.imu.sampling_frequency |> String.fromInt
                               Nothing  -> "no configuration available"
+      
+      low_pass_cut_off_frequency = case model.robotConfig of 
+                              Just config -> config.hardware.imu.low_pass_cut_off_frequency |> String.fromInt
+                              Nothing  -> "no configuration available"
 
       led = case model.robotConfig of
                               Just config -> config.hardware.led.gpio |> String.fromInt
@@ -191,9 +197,10 @@ view model =
       [ div Style.column [ p [] [text ("imu: " ++ imu_reply)]]
       , div Style.column [   
         div []
-          [ input [ placeholder "Robot name", value model.name, onInput Change ] []
+          [ input [ placeholder model.name, value model.name, onInput Change ] []
           , button [ onClick UpdateName ] [ text "update name" ]
           , p []  [text ("robotconfig imu frequency: " ++ sampling_frequency) ] 
+          , p []  [text ("robotconfig imu cut off frequency: " ++ low_pass_cut_off_frequency) ] 
           , p []  [text ("robotconfig led GPIO: " ++ led) ] 
           ] ]
       ]
