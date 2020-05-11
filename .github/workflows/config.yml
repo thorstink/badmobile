@@ -2,13 +2,6 @@ name: CI
 
 on: [push]
 
-# runs-on: ${{ matrix.os }}
-# strategy:
-#   matrix:
-#     os: [ubuntu-18.04]
-#     compiler: gcc
-#     version: "9"
-
 jobs:
   build-ui:
     runs-on: ubuntu-latest
@@ -21,12 +14,8 @@ jobs:
           cd ui 
           elm make src/Main.elm
 
-  # build-backend:
+  build-backend:
     runs-on: ubuntu-latest
-    
-    strategy:
-      matrix:
-        gcc: [9]
 
     steps:
     - uses: actions/checkout@v1
@@ -37,7 +26,9 @@ jobs:
         sudo add-apt-repository universe
         sudo apt update
         sudo apt-get install -y lcov gcovr libboost-all-dev libeigen3-dev libgtsam-dev libtool pkg-config autoconf-archive libfmt-dev
-
+        sudo apt-get install -y g++-9 g++-9-multilib
+        echo "::set-env name=CC::gcc-9"
+        echo "::set-env name=CXX::g++-9"
     - name: pigpio
       run: |
         git clone https://github.com/joan2937/pigpio.git
