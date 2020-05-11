@@ -24,6 +24,7 @@ TEST_CASE("Test imu config") {
     REQUIRE(lsm9ds1::containsImuConfig(settings));
   }
   SECTION("imu config is valid") {
-    REQUIRE(lsm9ds1::containsImuConfig(settings["robot"]["hardware"]["imu"]));
+    REQUIRE(lsm9ds1::containsImuConfig(
+        settings.at("robot").at("hardware").at("imu")));
   }
 }
