@@ -2,11 +2,12 @@ name: CI
 
 on: [push]
 
-include:
-  - name: ubuntu-18.04-gcc-9
-    os: ubuntu-18.04
-    compiler: gcc
-    version: "9"
+# runs-on: ${{ matrix.os }}
+# strategy:
+#   matrix:
+#     os: [ubuntu-18.04]
+#     compiler: gcc
+#     version: "9"
 
 jobs:
   build-ui:
@@ -21,7 +22,11 @@ jobs:
           elm make src/Main.elm
 
   # build-backend:
-    runs-on: ubuntu-18.04-gcc-9
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        gcc: [9]
 
     steps:
     - uses: actions/checkout@v1
