@@ -1,4 +1,5 @@
 #include "lsm9ds1/config.hpp"
+#include "state.h"
 #include <catch2/catch.hpp>
 #include <iostream>
 
@@ -29,5 +30,9 @@ TEST_CASE("Test imu config") {
   SECTION("imu config is valid") {
     const auto &imu_config = settings["robot"]["hardware"]["imu"];
     REQUIRE(lsm9ds1::imuConfigIsValid(imu_config));
+  }
+
+  SECTION("complete config is valid") {
+    REQUIRE(robot::robotConfigValid(settings));
   }
 }

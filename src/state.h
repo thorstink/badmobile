@@ -27,16 +27,20 @@ auto noop = Reducer([](State &m) { return std::move(m); });
 namespace robot {
 // silly funtion to test valid config. Is not complete.
 inline auto robotConfigValid(const nlohmann::json &config) {
-  const auto &name_config = config["robot"];
-  const bool name = name_config.contains("name");
-  const auto &diff_drive_config =
-      config["robot"]["differential_drive_parameters"];
-  const bool diffdrive = config.contains("track") &&
-                         config.contains("wheel_diameter_left") &&
-                         config.contains("wheel_diameter_right");
+  try {
+    const bool name = config["robot"].contains("name");
+    const auto &diff_drive_config =
+        config["robot"]["differential_drive_parameters"];
+    const bool diffdrive = diff_drive_config.contains("track") &&
+                           diff_drive_config.contains("wheel_diameter_left") &&
+                           diff_drive_config.contains("wheel_diameter_right");
 
-  const bool hardware = config["robot"].contains("hardware");
+    const auto &hardware_config = config["robot"]["hardware"];
 
-  return hardware && name && diffdrive;
+    const bool hardware = config["robot"].contains("hardware");
+    return hardware && name && diffdrive;
+  } catch (...) {
+    return false;
+  }
 }
 } // namespace robot

@@ -190,7 +190,7 @@ int main(int argc, const char *argv[]) {
 
   // if settings/config is updated. Forward to everyone listening.
   states | rxo::map([](const State &m) { return m.settings; }) |
-      distinct_until_changed() |
+      distinct_until_changed() | rxo::filter(&robot::robotConfigValid) |
       tap([settings_handle](const nlohmann::json &c) {
         settings_handle->send(c);
         dispatchEffect([=]() {
