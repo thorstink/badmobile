@@ -125,9 +125,10 @@ int main(int argc, const char *argv[]) {
      updates pause before signaling the url has changed. this is important
      because it prevents flooding the imu with restarting the whole time.
   */
-  auto imuchanges = setting_updates | rxo::filter(&lsm9ds1::containsImuConfig) |
-                    debounce(milliseconds(1000), mainthread) |
-                    distinct_until_changed() | replay(1) | ref_count();
+  auto imuchanges = setting_updates | debounce(milliseconds(1000), mainthread) |
+                    distinct_until_changed() |
+                    rxo::filter(&lsm9ds1::containsImuConfig) | replay(1) |
+                    ref_count();
 
   reducers.push_back(imuchanges |
                      rxo::map([=](const nlohmann::json &imu_settings) {
