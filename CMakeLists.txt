@@ -23,26 +23,17 @@ add_code_coverage() # Adds instrumentation to all targets
 
 find_package(Eigen3 REQUIRED)
 find_package(GTSAM REQUIRED)
-find_package(Boost REQUIRED COMPONENTS fiber)
 find_package(Seasocks REQUIRED)
 find_package(pigpio REQUIRED)
 find_package(fmt REQUIRED)
 
 include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} ${PIGPIO_INCLUDE_DIRS} ${FMT_INCLUDE_DIRS} lib src/msg)
 
-#bno055 imu library
-add_library(bno055 
-  # src/bno055/BNO055_driver/bno055.c
-  src/bno055/i2c_bno055.c
-)
-
 set(dependencies
-  ${Boost_LIBRARIES}
   fmt
   pigpio
   Seasocks::seasocks
   gtsam
-  bno055
 )
 
 #app
@@ -67,12 +58,11 @@ if(BUILD_TESTING)
   set(TEST_SOURCES
       ${TEST_DIR}/base.cc
       ${TEST_DIR}/state.cc
-      ${TEST_DIR}/bno055.cc
       ${TEST_DIR}/config.cc
   )
   
   add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
-  target_link_libraries(${PROJECT_NAME}_test ${dependencies} bno055)
+  target_link_libraries(${PROJECT_NAME}_test ${dependencies})
   add_test(${PROJECT_NAME}_test ${PROJECT_NAME}_test)
 endif()
 

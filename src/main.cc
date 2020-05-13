@@ -146,7 +146,7 @@ int main(int argc, const char *argv[]) {
                          m.settings["robot"]["name"] = name;
                          //
                          dispatchEffect([=]() {
-                           fmt::print("in actions name is {0}", m.name);
+                           fmt::print("in actions name is {0}\n", m.name);
                            // return updated settings to interface
                            std::cout.flush();
                          });
