@@ -45,7 +45,7 @@ int main(int argc, const char *argv[]) {
 
   std::cerr << "command = " << command.c_str() << std::endl;
 
-  fmt::print("Running application {0} using {1} for configuration.", argv[0],
+  fmt::print("Running application {0} using {1} for configuration.\n", argv[0],
              argv[1]);
   // manually flush because otherwise not visable.
   std::cout.flush();
