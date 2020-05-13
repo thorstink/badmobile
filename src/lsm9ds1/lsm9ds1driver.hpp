@@ -17,19 +17,19 @@ struct xyz {
 };
 
 inline rxcpp::observable<imu_t>
-createLSM9DS1Observable(const nlohmann::json &imu_settings) {
+createLSM9DS1Observable(const nlohmann::json &settings) {
+  const auto &imu_settings = settings["robot"]["hardware"]["imu"];
   if (!lsm9ds1::imuConfigIsValid(imu_settings)) {
     // s.on_error(std::exception_ptr()); // wrong config
   }
   const int fs = imu_settings["sampling_frequency"];
   const int fc = imu_settings["low_pass_cut_off_frequency"];
-
   const int SCLK = imu_settings["SCLK"];
   const int MOSI = imu_settings["MOSI"];
   const int MISO = imu_settings["MISO"];
   const int CSAG = imu_settings["CSAG"];
 
-  const auto read_ag_u8 = [=](int g_spi_handle, char address) {
+  auto read_ag_u8 = [=](int g_spi_handle, char address) {
     uint8_t tx = SPI_READ | address;
     uint8_t rx;
     gpioWrite(CSAG, 0);
@@ -39,7 +39,7 @@ createLSM9DS1Observable(const nlohmann::json &imu_settings) {
     return rx;
   };
 
-  const auto write_ag_u8 = [=](int g_spi_handle, char address, char value) {
+  auto write_ag_u8 = [=](int g_spi_handle, char address, char value) {
     uint8_t tx1 = SPI_WRITE | address;
     uint8_t tx2 = value;
     gpioWrite(CSAG, 0);
@@ -49,7 +49,7 @@ createLSM9DS1Observable(const nlohmann::json &imu_settings) {
     return;
   };
 
-  const auto readXYZ = [=](int g_spi_handle, char start_address) {
+  auto readXYZ = [=](int g_spi_handle, char start_address) {
     char buffer[6];
     uint8_t tx = SPI_READ | start_address;
 
@@ -76,7 +76,7 @@ createLSM9DS1Observable(const nlohmann::json &imu_settings) {
     return xyz{xhi, yhi, zhi};
   };
 
-  const auto init_lsm9ds1 = [=](int g_spi_handle) {
+  auto init_lsm9ds1 = [=](int g_spi_handle) {
     // soft reset & reboot accel/gyro
     write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG8, 0x05);
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -126,7 +126,7 @@ createLSM9DS1Observable(const nlohmann::json &imu_settings) {
   };
 
   return rxcpp::observable<>::interval(std::chrono::microseconds(1000000 / fs))
-      .map([=](int) {
+      .map([=](int i) {
         const auto now = std::chrono::steady_clock::now();
         const auto acc = readXYZ(g_spi_handle, LSM9DS1_REGISTER_OUT_X_L_XL);
         const auto gyr = readXYZ(g_spi_handle, LSM9DS1_REGISTER_OUT_X_L_G);
