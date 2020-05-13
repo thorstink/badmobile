@@ -254,7 +254,7 @@ int main(int argc, const char *argv[]) {
     }
     server.poll(10);
     if (s_interrupted) {
-      fmt::print("W: interrupt received, killing server…");
+      fmt::print("Interrupt received, killing application\n");
       break;
     }
   }

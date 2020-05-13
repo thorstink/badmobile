@@ -6,6 +6,20 @@
 #include <fstream>
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
+#include <signal.h>
+
+// http://zguide.zeromq.org/cpp:interrupt
+static int s_interrupted = 0;
+static void s_signal_handler(int signal_value) { s_interrupted = 1; }
+
+static void s_catch_signals(void) {
+  struct sigaction action;
+  action.sa_handler = s_signal_handler;
+  action.sa_flags = 0;
+  sigemptyset(&action.sa_mask);
+  sigaction(SIGINT, &action, NULL);
+  sigaction(SIGTERM, &action, NULL);
+}
 
 using namespace rxcpp;
 using namespace rxcpp::rxo;
@@ -211,11 +225,16 @@ int main(int argc, const char *argv[]) {
   server.setStaticPath("ui");
 
   // loops
+  s_catch_signals();
   while (lifetime.is_subscribed() || !rl.empty()) {
     while (!rl.empty() && rl.peek().when < rl.now()) {
       rl.dispatch();
     }
     server.poll(10);
+    if (s_interrupted) {
+      fmt::print("Interrupt received, killing application\n");
+      break;
+    }
   }
 
   return 0;

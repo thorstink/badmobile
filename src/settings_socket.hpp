@@ -22,26 +22,26 @@ struct SettingsHandler : seasocks::WebSocket::Handler {
   std::function<void(nlohmann::json)> propagate_update;
 
   void onConnect(seasocks::WebSocket *con) override {
-    fmt::print("Connected a settings websocket connection");
+    fmt::print("Connected a settings websocket connection\n");
     std::cout.flush();
     _cons.insert(con);
     on_new_connection(con);
   }
   void onDisconnect(seasocks::WebSocket *con) override {
-    fmt::print("Disconnected a settings websocket connection");
+    fmt::print("Disconnected a settings websocket connection\n");
     // ...Do..nothing? because subject?
     std::cout.flush();
     _cons.erase(con);
   }
 
   void onData(seasocks::WebSocket * /*con*/, const char *data) override {
-    fmt::print("Receiving settings from user");
+    fmt::print("Receiving settings from user\n");
     std::cout.flush();
     propagate_update(nlohmann::json::parse(data));
   }
 
   void send(const nlohmann::json &r) const {
-    fmt::print("Forwarding settings data to users");
+    fmt::print("Forwarding settings data to users\n");
     std::cout.flush();
     for (auto *con : _cons) {
       con->send(r.dump());
