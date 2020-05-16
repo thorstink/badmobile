@@ -23,7 +23,6 @@ struct CmdVelHandler : seasocks::WebSocket::Handler {
 
     // add stuff to reply:
     nlohmann::json r;
-    r["received"] = true;
     r["linear_x"] = j.at("linear_x");
     r["angular_z"] = j.at("angular_z");
 

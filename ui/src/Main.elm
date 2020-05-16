@@ -11,7 +11,7 @@ import Robotconfig exposing (..)
 import Json.Decode as D
 import Json.Encode as E
 import ImuViz 
-import FakeImu exposing (ImuData, acc, gyr)
+import Imu exposing (ImuData, decodeImuData)
 
 port websocketCmdVelIn : (String -> msg) -> Sub msg
 port websocketCmdVelOut : String -> Cmd msg
@@ -36,7 +36,7 @@ encodeRobotName name =
 type alias Model =
     {
       pressedKeys : List Key
-    , twist : Twist
+    , twist : TwistData
     , action : Action
     , responses : String
     , imu_values : String
@@ -53,7 +53,7 @@ init : () -> ( Model, Cmd Msg )
 init _ =
     ( { 
         pressedKeys = []
-      , twist = Twist 1.0 1.0
+      , twist = TwistData 1.0 1.0
       , action = DontPublish
       , responses = ""
       , imu_values = "hi2"
@@ -118,7 +118,7 @@ update msg model =
                     , t = model.t + 1
                     , imuDatas = 
                         let 
-                          new_sample = case (D.decodeString ImuViz.replyImuDecoder model.imu_values) of
+                          new_sample = case (D.decodeString decodeImuData model.imu_values) of
                             Ok imu_msg -> imu_msg
                             _ -> ImuData 0 0.0 0.0 0.0 0.0 0.0 0.0
                         in
@@ -156,11 +156,11 @@ update msg model =
 view : Model -> Html Msg
 view model =
     let      
-      reply = case (D.decodeString replyDecoder model.responses) of
+      reply = case (D.decodeString decodeTwistData model.responses) of
                 Ok value -> "linear-x: " ++ (value.linear_x |> String.fromFloat) ++ ", angular z: " ++ (value.angular_z |> String.fromFloat)
                 _ -> "not a valid json"
 
-      imu_reply = case (D.decodeString ImuViz.replyImuDecoder model.imu_values) of
+      imu_reply = case (D.decodeString decodeImuData model.imu_values) of
                 Ok value -> "t: " ++ (value.t |> String.fromInt) ++ ", ax: " ++ (value.ax |> String.fromFloat) ++ ", ay: " ++ (value.ay |> String.fromFloat) ++ ", az: " ++ (value.az |> String.fromFloat) ++ "gx: " ++ (value.gx |> String.fromFloat) ++ ", gy: " ++ (value.gy |> String.fromFloat) ++ ", gz: " ++ (value.gz |> String.fromFloat)
                 _ -> "not a valid json"
       

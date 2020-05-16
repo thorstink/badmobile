@@ -102,6 +102,4 @@ decodeConfig =
         |> required "robot" decodeRobotConfig
 
 
-
-
 -- Encode
