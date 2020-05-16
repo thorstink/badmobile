@@ -7,7 +7,8 @@ import Html.Events exposing (onInput,onClick)
 import Keyboard exposing (Key(..))
 import Style
 import Teleop exposing (..)
-import Robotconfig exposing (..)
+import RobotConfig exposing (..)
+-- import Robotconfig exposing (..)
 import Json.Decode as D
 import Json.Encode as E
 import ImuViz 
@@ -45,7 +46,7 @@ type alias Model =
     , t : Int
     , lastImu : ImuData
     , imuDatas : List ImuData
-    , robotConfig : Maybe RobotConfig
+    , robotConfig : Maybe RobotConfigRobot
     }
 
 
@@ -133,10 +134,10 @@ update msg model =
           , Cmd.none
           )
         WebsocketSettingsIn value ->
-          ( { model | robotConfig = case (D.decodeString decodeConfig value) of
+          ( { model | robotConfig = case (D.decodeString decodeRobotConfig value) of
                                       Ok config -> Just config.robot
                                       _ -> Nothing
-                    , name = case (D.decodeString decodeConfig value) of
+                    , name = case (D.decodeString decodeRobotConfig value) of
                                       Ok config -> config.robot.name
                                       _ -> "no configuration available"
             }
@@ -173,7 +174,7 @@ view model =
                               Nothing  -> "no configuration available"
 
       led = case model.robotConfig of
-                              Just config -> config.hardware.led.gpio |> String.fromInt
+                              Just config -> config.hardware.led.gPIO |> String.fromInt
                               Nothing  -> "no configuration available"
 
       lin_x = model.twist.linear_x |> String.fromFloat

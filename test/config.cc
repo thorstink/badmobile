@@ -7,10 +7,10 @@ TEST_CASE("Test imu config") {
   // for now like this.
   nlohmann::json settings;
   settings["robot"]["name"] = "The Badmobile";
-  settings["robot"]["differential_drive_parameters"]["track"] = 0.2;
-  settings["robot"]["differential_drive_parameters"]["wheel_diameter_left"] =
+  settings["robot"]["parameters"]["track"] = 0.2;
+  settings["robot"]["parameters"]["wheel_diameter_left"] =
       0.5;
-  settings["robot"]["differential_drive_parameters"]["wheel_diameter_right"] =
+  settings["robot"]["parameters"]["wheel_diameter_right"] =
       0.5;
   settings["robot"]["hardware"]["imu"]["sampling_frequency"] = 10;
   settings["robot"]["hardware"]["imu"]["low_pass_cut_off_frequency"] = 100;

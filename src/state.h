@@ -30,7 +30,7 @@ inline auto robotConfigValid(const nlohmann::json &config) {
   try {
     const bool name = config["robot"].contains("name");
     const auto &diff_drive_config =
-        config["robot"]["differential_drive_parameters"];
+        config["robot"]["parameters"];
     const bool diffdrive = diff_drive_config.contains("track") &&
                            diff_drive_config.contains("wheel_diameter_left") &&
                            diff_drive_config.contains("wheel_diameter_right");
