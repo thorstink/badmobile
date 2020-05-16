@@ -38,13 +38,6 @@ const auto dispatchEffect = [](auto &&f) { effecttout.on_next(f); };
 
 int main(int argc, const char *argv[]) {
 
-  auto command = std::string{};
-  for (auto cursor = argv, end = argv + argc; cursor != end; ++cursor) {
-    command += std::string{*cursor};
-  }
-
-  std::cerr << "command = " << command.c_str() << std::endl;
-
   fmt::print("Running application {0} using {1} for configuration.\n", argv[0],
              argv[1]);
   // manually flush because otherwise not visable.

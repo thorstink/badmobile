@@ -44,10 +44,6 @@ target_link_libraries(${PROJECT_NAME}_app ${dependencies})
 add_executable(${PROJECT_NAME}_simulate_app src/simulate_app.cc)
 target_link_libraries(${PROJECT_NAME}_simulate_app ${dependencies})
 
-#imu
-add_executable(${PROJECT_NAME}_lsm9ds1 src/lsm9ds1.cc)
-target_link_libraries(${PROJECT_NAME}_lsm9ds1 ${dependencies})
-
 if(BUILD_TESTING)
   # Enable testing for the project
   enable_testing()

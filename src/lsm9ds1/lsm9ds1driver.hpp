@@ -20,7 +20,7 @@ inline rxcpp::observable<imu_t>
 createLSM9DS1Observable(const nlohmann::json &settings) {
   const auto &imu_settings = settings["robot"]["hardware"]["imu"];
   if (!lsm9ds1::imuConfigIsValid(imu_settings)) {
-    // s.on_error(std::exception_ptr()); // wrong config
+        // err!
   }
   const int fs = imu_settings["sampling_frequency"];
   const int fc = imu_settings["low_pass_cut_off_frequency"];
@@ -114,7 +114,7 @@ createLSM9DS1Observable(const nlohmann::json &settings) {
   gpioSetMode(CSAG, PI_OUTPUT);
   g_spi_handle = spiOpen(SPI_CHANNEL, SPI_BAUD, SPI_FLAGS);
   if (g_spi_handle < 0) {
-    // s.on_error(std::exception_ptr()); // spi bus error
+        // err!
   }
 
   // init
@@ -122,7 +122,7 @@ createLSM9DS1Observable(const nlohmann::json &settings) {
   // check
   if (read_ag_u8(g_spi_handle, LSM9DS1_REGISTER_WHO_AM_I_XG) !=
       WHO_AM_I_AG_RSP) {
-    // s.on_error(std::exception_ptr()); // imu error
+        // err!
   };
 
   return rxcpp::observable<>::interval(std::chrono::microseconds(1000000 / fs))
@@ -141,7 +141,9 @@ createLSM9DS1Observable(const nlohmann::json &settings) {
       .finally([=]() {
         auto e = spiClose(g_spi_handle);
         if (e != 0) {
+          // err!
         } else {
+          // good!
         }
       });
 }
