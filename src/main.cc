@@ -224,6 +224,7 @@ int main(int argc, const char *argv[]) {
         settings_handle->send(c);
         dispatchEffect([=]() {
           // write to file for persistency
+          fmt::print("writing the following settings to a file:\n{0}\n", c.dump());
           std::fstream o(settingsFile);
           o << std::setw(4) << c;
         });

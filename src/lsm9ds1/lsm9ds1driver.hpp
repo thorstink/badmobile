@@ -20,7 +20,7 @@ inline rxcpp::observable<imu_t>
 createLSM9DS1Observable(const nlohmann::json &settings) {
   const auto &imu_settings = settings["robot"]["hardware"]["imu"];
   if (!lsm9ds1::imuConfigIsValid(imu_settings)) {
-        // err!
+    // err!
   }
   const int fs = imu_settings["sampling_frequency"];
   const int fc = imu_settings["low_pass_cut_off_frequency"];
@@ -114,7 +114,7 @@ createLSM9DS1Observable(const nlohmann::json &settings) {
   gpioSetMode(CSAG, PI_OUTPUT);
   g_spi_handle = spiOpen(SPI_CHANNEL, SPI_BAUD, SPI_FLAGS);
   if (g_spi_handle < 0) {
-        // err!
+    // err!
   }
 
   // init
@@ -122,28 +122,28 @@ createLSM9DS1Observable(const nlohmann::json &settings) {
   // check
   if (read_ag_u8(g_spi_handle, LSM9DS1_REGISTER_WHO_AM_I_XG) !=
       WHO_AM_I_AG_RSP) {
-        // err!
+    // err!
   };
 
+  fmt::print("Opening imu observable with config \n {0}\n",
+             imu_settings.dump());
   return rxcpp::observable<>::interval(std::chrono::microseconds(1000000 / fs))
       .map([=](int i) {
-        const auto now = std::chrono::steady_clock::now();
+        const auto now =
+            std::chrono::steady_clock::now().time_since_epoch().count();
         const auto acc = readXYZ(g_spi_handle, LSM9DS1_REGISTER_OUT_X_L_XL);
         const auto gyr = readXYZ(g_spi_handle, LSM9DS1_REGISTER_OUT_X_L_G);
-        return imu_t{now.time_since_epoch().count(),
-                     double(acc.x),
-                     double(acc.y),
-                     double(acc.z),
-                     double(gyr.x),
-                     double(gyr.y),
-                     double(gyr.z)};
+        return imu_t{now,           double(acc.x), double(acc.y), double(acc.z),
+                     double(gyr.x), double(gyr.y), double(gyr.z)};
       })
       .finally([=]() {
         auto e = spiClose(g_spi_handle);
         if (e != 0) {
           // err!
+          fmt::print("Closing imu observable with an SPI-error!\n");
         } else {
           // good!
+          fmt::print("Closing imu observable.\n");
         }
       });
 }

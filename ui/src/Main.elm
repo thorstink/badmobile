@@ -20,16 +20,30 @@ port websocketSettingsOut : String -> Cmd msg
 port websocketSettingsIn : (String -> msg) -> Sub msg
 port websocketImuIn : (String -> msg) -> Sub msg
 
+type alias UpdateFields =
+    { name : String
+    , fs : String
+    , fc : String
+    }
+
 -- ENCODE
 
-encodeRobotName : String -> E.Value
-encodeRobotName name =
+encodeRobotUpdate : UpdateFields -> E.Value
+encodeRobotUpdate f =
   E.object
     [ ( "robot"
       , E.object
-        [ ( "name", E.string name )
-        ] 
-      )
+        [ ( "name", E.string f.name )
+        ,  ( "hardware", E.object
+          [ ( "imu"
+            , E.object
+            [ ( "sampling_frequency", E.int (Maybe.withDefault 20 (String.toInt f.fs)  ) )
+            , ( "low_pass_cut_off_frequency", E.int (Maybe.withDefault 20 (String.toInt f.fc) ) ) ] 
+            )
+          ]
+        )
+        ]
+      ) 
     ]
 
 {- MODEL -}
@@ -41,12 +55,12 @@ type alias Model =
     , action : Action
     , responses : String
     , imu_values : String
-    , name : String
     , input : String
     , t : Int
     , lastImu : ImuData
     , imuDatas : List ImuData
     , robotConfig : Maybe RobotConfigRobot
+    , fields : UpdateFields
     }
 
 
@@ -58,12 +72,12 @@ init _ =
       , action = DontPublish
       , responses = ""
       , imu_values = "hi2"
-      , name = ""
       , input = ""
       , t = 0
       , lastImu = ImuData 0 0.0 0.0 0.0 0.0 0.0 0.0
       , imuDatas = []
       , robotConfig = Nothing
+      , fields = UpdateFields "" "" ""
       }
     , Cmd.none
     )
@@ -75,8 +89,11 @@ type Msg
   | WebsocketCmdVelIn String 
   | WebsocketImuIn String 
   | WebsocketSettingsIn String 
-  | Change String
-  | UpdateName
+  | ChangeName String
+  | ChangeImuFs String
+  | ChangeImuFc String
+  | SendUpdatesToRobot
+  | ResetUpdateFields
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -137,19 +154,36 @@ update msg model =
           ( { model | robotConfig = case (D.decodeString decodeRobotConfig value) of
                                       Ok config -> Just config.robot
                                       _ -> Nothing
-                    , name = case (D.decodeString decodeRobotConfig value) of
-                                      Ok config -> config.robot.name
-                                      _ -> "no configuration available"
+                    , fields = case (D.decodeString decodeRobotConfig value) of
+                                      Ok config -> UpdateFields config.robot.name model.fields.fs model.fields.fc
+
+                                      _ -> UpdateFields "no configuration available" "no configuration available" "no configuration available"
             }
             , Cmd.none
           )
-        Change value ->
-          ( { model | name = value }
+        ChangeName name ->
+          ( { model | fields = UpdateFields name model.fields.fs model.fields.fc }
           , Cmd.none
           )
-        UpdateName ->
+        ChangeImuFs fs ->
+          ( { model | fields = UpdateFields model.fields.name fs model.fields.fc }
+          , Cmd.none
+          )
+        ChangeImuFc fc ->
+          ( { model | fields = UpdateFields model.fields.name model.fields.fs fc }
+          , Cmd.none
+          )
+        ResetUpdateFields -> 
+          ( { model | fields = 
+              case model.robotConfig of 
+                Just config -> UpdateFields config.name (config.hardware.imu.sampling_frequency |> String.fromInt) (config.hardware.imu.low_pass_cut_off_frequency |> String.fromInt)
+                Nothing  -> UpdateFields "" "" ""
+            }
+          , Cmd.none
+          )
+        SendUpdatesToRobot ->
           ( model
-          , websocketSettingsOut (E.encode 0 (encodeRobotName model.name))
+          , websocketSettingsOut (E.encode 0 (encodeRobotUpdate model.fields))
           )
 
 {- VIEW -}
@@ -165,6 +199,10 @@ view model =
                 Ok value -> "t: " ++ (value.t |> String.fromInt) ++ ", ax: " ++ (value.ax |> String.fromFloat) ++ ", ay: " ++ (value.ay |> String.fromFloat) ++ ", az: " ++ (value.az |> String.fromFloat) ++ "gx: " ++ (value.gx |> String.fromFloat) ++ ", gy: " ++ (value.gy |> String.fromFloat) ++ ", gz: " ++ (value.gz |> String.fromFloat)
                 _ -> "not a valid json"
       
+      name = case model.robotConfig of 
+                              Just config -> config.name
+                              Nothing  -> "no configuration available"
+
       sampling_frequency = case model.robotConfig of 
                               Just config -> config.hardware.imu.sampling_frequency |> String.fromInt
                               Nothing  -> "no configuration available"
@@ -195,10 +233,10 @@ view model =
       [ div Style.column [ p [] [text ("imu: " ++ imu_reply)]]
       , div Style.column [   
         div []
-          [ input [ placeholder model.name, value model.name, onInput Change ] []
-          , button [ onClick UpdateName ] [ text "update name" ]
-          , p []  [text ("robotconfig imu frequency: " ++ sampling_frequency) ] 
-          , p []  [text ("robotconfig imu cut off frequency: " ++ low_pass_cut_off_frequency) ] 
+          [ p []  [text "Robot name: ", input [ placeholder name, value model.fields.name, onInput ChangeName ] [] ] 
+          , p []  [text "IMU fs: ", input [ placeholder sampling_frequency, value model.fields.fs, onInput ChangeImuFs ] [] ] 
+          , p []  [text "IMU fc: ", input [ placeholder low_pass_cut_off_frequency, value model.fields.fc, onInput ChangeImuFc ] [] ]           
+          , button [ onClick SendUpdatesToRobot ] [ text "Send updates to robot" ], button [ onClick ResetUpdateFields ] [ text "Reset fields" ]
           , p []  [text ("robotconfig led GPIO: " ++ led) ] 
           ] ]
       ]

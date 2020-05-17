@@ -3,6 +3,7 @@
 #include "imu_msg.hpp"
 #include "lsm9ds1/config.hpp" // for imu funcs
 #include "nlohmann/json.hpp"
+#include <fmt/format.h>
 #include <rxcpp/rx.hpp>
 #include <seasocks/WebSocket.h>
 
@@ -25,12 +26,23 @@ rxcpp::observable<imu_t> createFakeImu(const nlohmann::json &settings) {
     // s.on_error(std::exception_ptr()); // wrong config
     // do something in error fake imu
   }
+
+  fmt::print("Opening imu observable with config \n {0}\n",
+             imu_settings.dump());
+
   return rxcpp::observable<>::interval(std::chrono::microseconds(1000000 / fs))
-      .map([](int i) {
-        int64_t t = uint64_t(i) * 1e8;
-        double t_d = double(t);
-        double j = i;
-        return imu_t{t,      sin(j),       sin(j + 0.2), sin(j + 0.4),
-                     cos(j), cos(j + 0.2), cos(j + 0.4)};
-      });
+      .map([fs](int i) {
+        const auto now =
+            std::chrono::steady_clock::now().time_since_epoch().count();
+        double j = i / double(fs);
+        return imu_t{now,
+                     sin(j) + 0.5 * sin(50 * j),
+                     sin(j + 0.2) + 0.5 * sin(50 * j),
+                     sin(j + 0.4) + 0.5 * sin(50 * j),
+                     cos(j) + 0.5 * sin(50 * j),
+                     cos(j + 0.2) + 0.5 * sin(50 * j),
+                     cos(j + 0.4) + 0.5 * sin(50 * j)};
+      })
+      .finally([]() { fmt::print("Closing imu observable!\n"); });
+  ;
 };
