@@ -131,30 +131,30 @@ encodeRobotConfigRobotHardwareImu record =
     Json.Encode.object
         [ ("sampling_frequency",  Json.Encode.int <| record.sampling_frequency)
         , ("low_pass_cut_off_frequency",  Json.Encode.int <| record.low_pass_cut_off_frequency)
-        , ("sCLK",  Json.Encode.int <| record.sCLK)
-        , ("mOSI",  Json.Encode.int <| record.mOSI)
-        , ("mISO",  Json.Encode.int <| record.mISO)
-        , ("cSAG",  Json.Encode.int <| record.cSAG)
+        , ("SCLK",  Json.Encode.int <| record.sCLK)
+        , ("MOSI",  Json.Encode.int <| record.mOSI)
+        , ("MISO",  Json.Encode.int <| record.mISO)
+        , ("CSAG",  Json.Encode.int <| record.cSAG)
         ]
 
 encodeRobotConfigRobotHardwareMotor_left : RobotConfigRobotHardwareMotor_left -> Json.Encode.Value
 encodeRobotConfigRobotHardwareMotor_left record =
     Json.Encode.object
-        [ ("pWM_GPIO_FORWARD",  Json.Encode.int <| record.pWM_GPIO_FORWARD)
-        , ("pWM_GPIO_REVERSE",  Json.Encode.int <| record.pWM_GPIO_REVERSE)
+        [ ("PWM_GPIO_FORWARD",  Json.Encode.int <| record.pWM_GPIO_FORWARD)
+        , ("PWM_GPIO_REVERSE",  Json.Encode.int <| record.pWM_GPIO_REVERSE)
         ]
 
 encodeRobotConfigRobotHardwareMotor_right : RobotConfigRobotHardwareMotor_right -> Json.Encode.Value
 encodeRobotConfigRobotHardwareMotor_right record =
     Json.Encode.object
-        [ ("pWM_GPIO_FORWARD",  Json.Encode.int <| record.pWM_GPIO_FORWARD)
-        , ("pWM_GPIO_REVERSE",  Json.Encode.int <| record.pWM_GPIO_REVERSE)
+        [ ("PWM_GPIO_FORWARD",  Json.Encode.int <| record.pWM_GPIO_FORWARD)
+        , ("PWM_GPIO_REVERSE",  Json.Encode.int <| record.pWM_GPIO_REVERSE)
         ]
 
 encodeRobotConfigRobotHardwareLed : RobotConfigRobotHardwareLed -> Json.Encode.Value
 encodeRobotConfigRobotHardwareLed record =
     Json.Encode.object
-        [ ("gPIO",  Json.Encode.int <| record.gPIO)
+        [ ("GPIO",  Json.Encode.int <| record.gPIO)
         ]
 
 encodeRobotConfigRobotHardware : RobotConfigRobotHardware -> Json.Encode.Value
