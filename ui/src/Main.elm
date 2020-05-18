@@ -26,26 +26,6 @@ type alias UpdateFields =
     , fc : String
     }
 
--- ENCODE
-
-encodeRobotUpdate : UpdateFields -> E.Value
-encodeRobotUpdate f =
-  E.object
-    [ ( "robot"
-      , E.object
-        [ ( "name", E.string f.name )
-        ,  ( "hardware", E.object
-          [ ( "imu"
-            , E.object
-            [ ( "sampling_frequency", E.int (Maybe.withDefault 20 (String.toInt f.fs)  ) )
-            , ( "low_pass_cut_off_frequency", E.int (Maybe.withDefault 20 (String.toInt f.fc) ) ) ] 
-            )
-          ]
-        )
-        ]
-      ) 
-    ]
-
 {- MODEL -}
 
 type alias Model =
@@ -183,7 +163,24 @@ update msg model =
           )
         SendUpdatesToRobot ->
           ( model
-          , websocketSettingsOut (E.encode 0 (encodeRobotUpdate model.fields))
+          , 
+            case model.robotConfig of 
+                  Just config -> 
+                    let
+                      f = model.fields
+                      old_imu_settings = config.hardware.imu 
+                      old_hardware_settings = config.hardware 
+                      new_fs = (Maybe.withDefault config.hardware.imu.sampling_frequency (String.toInt f.fs))
+                      new_fc = (Maybe.withDefault config.hardware.imu.low_pass_cut_off_frequency (String.toInt f.fc))
+                      new_imu_settings = {old_imu_settings | sampling_frequency = new_fs, low_pass_cut_off_frequency = new_fc }
+                      new_hardware_settings = {old_hardware_settings | imu = new_imu_settings}
+                      -- new_config = (setHardware <| setIMU new_imu_settings) ({config | name = fields.name})
+                      new_config = {config | name = f.name, hardware = new_hardware_settings}
+                    in
+                      websocketSettingsOut (E.encode 0 (encodeRobotConfig (RobotConfig new_config)))
+                  Nothing  -> Cmd.none
+            
+
           )
 
 {- VIEW -}

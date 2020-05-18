@@ -50,6 +50,14 @@ type alias RobotConfigRobot =
     , hardware : RobotConfigRobotHardware
     }
 
+setHardware : (RobotConfigRobotHardware -> RobotConfigRobotHardware) -> RobotConfigRobot -> RobotConfigRobot
+setHardware fn model =
+    { model | hardware = fn model.hardware }
+
+setIMU : (RobotConfigRobotHardwareImu) -> RobotConfigRobotHardware -> RobotConfigRobotHardware
+setIMU fn model =
+    { model | imu = model.imu }
+
 decodeRobotConfig : Decoder RobotConfig
 decodeRobotConfig =
     Decode.succeed RobotConfig

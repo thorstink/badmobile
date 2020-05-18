@@ -136,6 +136,7 @@ createLSM9DS1Observable(const nlohmann::json &settings) {
         return imu_t{now,           double(acc.x), double(acc.y), double(acc.z),
                      double(gyr.x), double(gyr.y), double(gyr.z)};
       })
+      // .Retry()
       .finally([=]() {
         auto e = spiClose(g_spi_handle);
         if (e != 0) {

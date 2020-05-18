@@ -55,6 +55,7 @@ if(BUILD_TESTING)
       ${TEST_DIR}/base.cc
       ${TEST_DIR}/state.cc
       ${TEST_DIR}/config.cc
+      ${TEST_DIR}/lowpass.cc
   )
   
   add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})

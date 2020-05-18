@@ -132,10 +132,12 @@ int main(int argc, const char *argv[]) {
      updates pause before signaling the url has changed. this is important
      because it prevents flooding the imu with restarting the whole time.
   */
-  auto imuchanges = setting_updates | debounce(milliseconds(1000), mainthread) |
-                    distinct_until_changed() |
-                    rxo::filter(&lsm9ds1::containsImuConfig) | replay(1) |
-                    ref_count();
+  auto imuchanges =
+      setting_updates | tap([](const nlohmann::json &s) {
+        fmt::print("PRITNING \n{0}\n", s.dump());
+      }) |
+      debounce(milliseconds(1000), mainthread) | distinct_until_changed() |
+      rxo::filter(&lsm9ds1::containsImuConfig) | replay(1) | ref_count();
 
   reducers.push_back(imuchanges |
                      rxo::map([=](const nlohmann::json &imu_settings) {
@@ -203,7 +205,8 @@ int main(int argc, const char *argv[]) {
         settings_handle->send(c);
         dispatchEffect([=]() {
           // write to file for persistency
-          fmt::print("writing the following settings to a file:\n{0}\n", c.dump());
+          fmt::print("writing the following settings to a file:\n{0}\n",
+                     c.dump());
           std::fstream o(settingsFile);
           o << std::setw(4) << c;
         });
