@@ -161,8 +161,7 @@ int main(int argc, const char *argv[]) {
   reducers.push_back(imuchanges |
                      rxo::map([=](const nlohmann::json &imu_settings) {
                        return createLSM9DS1Observable(imu_settings) |
-                              subscribe_on(workthread) | rxo::map(&to_json) |
-                              observe_on(mainthread) |
+                              rxo::map(&to_json) |
                               tap([imu_handle](const nlohmann::json &j) {
                                 imu_handle->send(j);
                               }) |
@@ -224,7 +223,8 @@ int main(int argc, const char *argv[]) {
         settings_handle->send(c);
         dispatchEffect([=]() {
           // write to file for persistency
-          fmt::print("writing the following settings to a file:\n{0}\n", c.dump());
+          fmt::print("writing the following settings to a file:\n{0}\n",
+                     c.dump());
           std::fstream o(settingsFile);
           o << std::setw(4) << c;
         });
