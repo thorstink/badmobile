@@ -4,6 +4,7 @@
 #include "config.hpp"
 #include "imu_msg.hpp"
 #include "lsm9ds1.h"
+#include "lsm9ds1_v2.h"
 #include "nlohmann/json.hpp"
 #include <pigpio.h>
 #include <rxcpp/rx.hpp>
@@ -80,28 +81,53 @@ createLSM9DS1Observable(const nlohmann::json &settings) {
     // soft reset & reboot accel/gyro
     write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG8, 0x05);
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    // enable gyro continuous
-    write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG1_G,
-                LSM9DS1_REGISTER_CTRL_REG1_G_ON);
-    // Enable the accelerometer continous
-    write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG5_XL, 0x38);
-    // 1 KHz out data rate, BW set by ODR, 408Hz anti-aliasing
-    write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG6_XL, 0xC0);
 
-    {
-      // set range 2G
-      uint8_t reg = read_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG6_XL);
-      reg &= ~(0b00011000);
-      reg |= LSM9DS1_ACCELRANGE_2G;
-      write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG6_XL, reg);
-    }
-    {
-      // set dpi 245
-      uint8_t reg = read_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG1_G);
-      reg &= ~(0b00110000);
-      reg |= LSM9DS1_ACCELRANGE_2G;
-      write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG1_G, reg);
-    }
+    uint8_t Gscale = GFS_245DPS; // gyro full scale
+    uint8_t Godr = GODR_952Hz;   // gyro data sample rate
+    uint8_t Gbw = GBW_highest;   // gyro data bandwidth
+    uint8_t Ascale = AFS_2G;     // accel full scale
+    uint8_t Aodr = AODR_952Hz;   // accel data sample rate
+    uint8_t Abw = ABW_105Hz;     // accel data bandwidth
+
+    // enable the 3-axes of the gyroscope
+    write_ag_u8(g_spi_handle, LSM9DS1XG_CTRL_REG4, 0x38);
+    // configure the gyroscope
+    write_ag_u8(g_spi_handle, LSM9DS1XG_CTRL_REG1_G,
+                Godr << 5 | Gscale << 3 | Gbw);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    // enable the three axes of the accelerometer
+    write_ag_u8(g_spi_handle, LSM9DS1XG_CTRL_REG5_XL, 0x38);
+    // configure the accelerometer-specify bandwidth selection with Abw
+    write_ag_u8(g_spi_handle, LSM9DS1XG_CTRL_REG6_XL,
+                Aodr << 5 | Ascale << 3 | 0x04 | Abw);
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    // enable block data update, allow auto-increment during multiple byte read
+    write_ag_u8(g_spi_handle, LSM9DS1XG_CTRL_REG8, 0x44);
+
+    /*
+        // enable gyro continuous
+        write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG1_G,
+                    LSM9DS1_REGISTER_CTRL_REG1_G_ON);
+        // Enable the accelerometer continous
+        write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG5_XL, 0x38);
+        // 1 KHz out data rate, BW set by ODR, 408Hz anti-aliasing
+        write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG6_XL, 0xC0);
+
+        {
+          // set range 2G
+          uint8_t reg = read_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG6_XL);
+          reg &= ~(0b00011000);
+          reg |= LSM9DS1_ACCELRANGE_2G;
+          write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG6_XL, reg);
+        }
+        {
+          // set dpi 245
+          uint8_t reg = read_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG1_G);
+          reg &= ~(0b00110000);
+          reg |= LSM9DS1_ACCELRANGE_2G;
+          write_ag_u8(g_spi_handle, LSM9DS1_REGISTER_CTRL_REG1_G, reg);
+        }
+     */
 
     gpioWrite(CSAG, 1);
   };
@@ -117,13 +143,14 @@ createLSM9DS1Observable(const nlohmann::json &settings) {
     // err!
   }
 
-  // init
-  init_lsm9ds1(g_spi_handle);
   // check
   if (read_ag_u8(g_spi_handle, LSM9DS1_REGISTER_WHO_AM_I_XG) !=
       WHO_AM_I_AG_RSP) {
     // err!
   };
+
+  // init
+  init_lsm9ds1(g_spi_handle);
 
   fmt::print("Opening imu observable with config \n {0}\n",
              imu_settings.dump());
@@ -136,7 +163,6 @@ createLSM9DS1Observable(const nlohmann::json &settings) {
         return imu_t{now,           double(acc.x), double(acc.y), double(acc.z),
                      double(gyr.x), double(gyr.y), double(gyr.z)};
       })
-      // .Retry()
       .finally([=]() {
         auto e = spiClose(g_spi_handle);
         if (e != 0) {
