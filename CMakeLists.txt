@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi -Werror -Wall -Wextra -march=native -O2")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi -Werror -Wall -Wextra -march=native -O2")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-psabi -Wno-unused-parameter -Werror -Wall -Wextra -march=native -O2")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi -Wno-unused-parameter -Werror -Wall -Wextra -march=native -O2")
 
 # verbose and sanitizers
 # https://stackoverflow.com/questions/45913603/for-gcc-in-the-fsanitize-option-how-to-use-address-and-leak-together
@@ -23,26 +23,17 @@ add_code_coverage() # Adds instrumentation to all targets
 
 find_package(Eigen3 REQUIRED)
 find_package(GTSAM REQUIRED)
-find_package(Boost REQUIRED COMPONENTS fiber)
 find_package(Seasocks REQUIRED)
 find_package(pigpio REQUIRED)
 find_package(fmt REQUIRED)
 
 include_directories(${EIGEN3_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} ${SEASOCKS_INCLUDE_DIRS} ${PIGPIO_INCLUDE_DIRS} ${FMT_INCLUDE_DIRS} lib src/msg)
 
-#bno055 imu library
-add_library(bno055 
-  # src/bno055/BNO055_driver/bno055.c
-  src/bno055/i2c_bno055.c
-)
-
 set(dependencies
-  ${Boost_LIBRARIES}
   fmt
   pigpio
   Seasocks::seasocks
   gtsam
-  bno055
 )
 
 #app
@@ -52,10 +43,6 @@ target_link_libraries(${PROJECT_NAME}_app ${dependencies})
 #simulated app
 add_executable(${PROJECT_NAME}_simulate_app src/simulate_app.cc)
 target_link_libraries(${PROJECT_NAME}_simulate_app ${dependencies})
-
-#imu
-add_executable(${PROJECT_NAME}_lsm9ds1 src/lsm9ds1.cc)
-target_link_libraries(${PROJECT_NAME}_lsm9ds1 ${dependencies})
 
 if(BUILD_TESTING)
   # Enable testing for the project
@@ -67,11 +54,12 @@ if(BUILD_TESTING)
   set(TEST_SOURCES
       ${TEST_DIR}/base.cc
       ${TEST_DIR}/state.cc
-      ${TEST_DIR}/bno055.cc
+      ${TEST_DIR}/config.cc
+      ${TEST_DIR}/lowpass.cc
   )
   
   add_executable(${PROJECT_NAME}_test ${TEST_SOURCES})
-  target_link_libraries(${PROJECT_NAME}_test ${dependencies} bno055)
+  target_link_libraries(${PROJECT_NAME}_test ${dependencies})
   add_test(${PROJECT_NAME}_test ${PROJECT_NAME}_test)
 endif()
 
@@ -84,10 +72,15 @@ set(ui_files
   ${CMAKE_CURRENT_SOURCE_DIR}/ui/badmobile.min.js
 )
 
+set(configuration_files
+  ${CMAKE_CURRENT_SOURCE_DIR}/config/application_config.json
+)
+
 set(targets
   ${PROJECT_NAME}_app
   ${PROJECT_NAME}_simulate_app
 )
 
 install(FILES ${ui_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/ui)
+install(FILES ${configuration_files} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install/config)
 install(TARGETS ${targets} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install)

@@ -1,17 +1,17 @@
 module Teleop exposing (..)
 
 import Keyboard exposing (Key(..))
-import Json.Decode as D
+import Json.Decode as Decode exposing (Decoder, decodeString, float, int, string, bool)
+import Json.Decode.Pipeline exposing (required, optional, hardcoded)
 import Json.Encode as E
 
-type alias Twist = {  
+type alias TwistData = {  
                       linear_x : Float
                     , angular_z : Float 
                     }
 
 -- ENCODE
-
-encode : Twist -> E.Value
+encode : TwistData -> E.Value
 encode twist =
   E.object
     [ ("linear_x", E.float twist.linear_x)
@@ -19,14 +19,11 @@ encode twist =
     ]
 
 -- DECODE
-
-type alias Reply = { received : Bool, linear_x : Float, angular_z : Float }
-replyDecoder : D.Decoder Reply
-replyDecoder =
-    D.map3 Reply 
-      (D.at [ "received" ] D.bool)
-      (D.at [ "linear_x" ] D.float)
-      (D.at [ "angular_z" ] D.float)
+decodeTwistData : Decoder TwistData
+decodeTwistData =
+    Decode.succeed TwistData
+        |> required "linear_x" float
+        |> required "angular_z" float
 
 type Throttle = IncreaseLinear | DecreaseLinear | IncreaseAngular | DecreaseAngular | Stop 
                 | Forward | Backward | Left | Right | CurveLeft | CurveRight
@@ -73,16 +70,16 @@ throttleMapper twist throttle =
     DecreaseAngular ->
       ({ twist | angular_z = twist.angular_z * 0.9}, DontPublish)
     Forward ->
-      (Twist twist.linear_x 0.0, Publish)
+      (TwistData twist.linear_x 0.0, Publish)
     Backward ->
-      (Twist -twist.linear_x 0.0, Publish)
+      (TwistData -twist.linear_x 0.0, Publish)
     Left ->
-      (Twist 0.0 twist.angular_z, Publish)
+      (TwistData 0.0 twist.angular_z, Publish)
     Right ->
-      (Twist 0.0 -twist.angular_z, Publish)
+      (TwistData 0.0 -twist.angular_z, Publish)
     CurveLeft ->
       (twist, Publish)
     CurveRight ->
-      (Twist twist.linear_x -twist.angular_z, Publish)
+      (TwistData twist.linear_x -twist.angular_z, Publish)
     Stop ->
-      (Twist 0.0 0.0, Publish)
+      (TwistData 0.0 0.0, Publish)

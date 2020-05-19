@@ -1,7 +1,9 @@
 #pragma once
 
 #include "imu_msg.hpp"
+#include "lsm9ds1/config.hpp" // for imu funcs
 #include "nlohmann/json.hpp"
+#include <fmt/format.h>
 #include <rxcpp/rx.hpp>
 #include <seasocks/WebSocket.h>
 
@@ -17,13 +19,30 @@ struct ImuHandler : seasocks::WebSocket::Handler {
   }
 };
 
-rxcpp::observable<imu_t> createFakeImu() {
-  return rxcpp::observable<>::interval(std::chrono::milliseconds(100))
-      .map([](int i) {
-        int64_t t = uint64_t(i) * 1e8;
-        double t_d = double(t);
-        double j = i;
-        return imu_t{t,      sin(j),       sin(j + 0.2), sin(j + 0.4),
-                     cos(j), cos(j + 0.2), cos(j + 0.4)};
-      });
+rxcpp::observable<imu_t> createFakeImu(const nlohmann::json &settings) {
+  const auto imu_settings = settings["robot"]["hardware"]["imu"];
+  const int fs = imu_settings["sampling_frequency"];
+  if (!lsm9ds1::imuConfigIsValid(imu_settings)) {
+    // s.on_error(std::exception_ptr()); // wrong config
+    // do something in error fake imu
+  }
+
+  fmt::print("Opening imu observable with config \n {0}\n",
+             imu_settings.dump());
+
+  return rxcpp::observable<>::interval(std::chrono::microseconds(1000000 / fs))
+      .map([fs](int i) {
+        const auto now =
+            std::chrono::steady_clock::now().time_since_epoch().count();
+        double j = i / double(fs);
+        return imu_t{now,
+                     sin(j) + 0.5 * sin(50 * j),
+                     sin(j + 0.2) + 0.5 * sin(50 * j),
+                     sin(j + 0.4) + 0.5 * sin(50 * j),
+                     cos(j) + 0.5 * sin(50 * j),
+                     cos(j + 0.2) + 0.5 * sin(50 * j),
+                     cos(j + 0.4) + 0.5 * sin(50 * j)};
+      })
+      .finally([]() { fmt::print("Closing imu observable!\n"); });
+  ;
 };

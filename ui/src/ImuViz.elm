@@ -1,10 +1,11 @@
-module ImuViz exposing (main,view, replyImuDecoder)
+module ImuViz exposing (main,view)
 
 import Axis
 import Html
 import Color exposing (Color)
 import Path exposing (Path)
-import FakeImu exposing (ImuData, generateImuData)
+import FakeImu exposing (generateImuData)
+import Imu exposing (ImuData)
 import Scale exposing (ContinuousScale, OrdinalScale)
 import Scale.Color
 import Shape
@@ -15,25 +16,10 @@ import TypedSvg.Attributes exposing (class, dy, fill, fontFamily, stroke, textAn
 import TypedSvg.Attributes.InPx exposing (fontSize, height, strokeWidth, x, y)
 import TypedSvg.Core exposing (Svg, text)
 import TypedSvg.Types exposing (AnchorAlignment(..), Paint(..), Transform(..), em)
-import Json.Decode as D
-
--- DECODE
-
-replyImuDecoder : D.Decoder ImuData
-replyImuDecoder =
-    D.map7 ImuData 
-      (D.at [ "t" ] D.int)
-      (D.at [ "ax" ] D.float)
-      (D.at [ "ay" ] D.float)
-      (D.at [ "az" ] D.float)
-      (D.at [ "gx" ] D.float)
-      (D.at [ "gy" ] D.float)
-      (D.at [ "gz" ] D.float)
 
 w : Float
 w =
     900
-
 
 h : Float
 h =

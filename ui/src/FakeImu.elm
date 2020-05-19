@@ -1,5 +1,6 @@
-module FakeImu exposing (..)
+module FakeImu exposing (generateImuData)
 
+import Imu exposing (ImuData)
 import Time
 
 acc : Int -> Float -> Float
@@ -9,16 +10,6 @@ acc n offset =
 gyr : Int -> Float -> Float
 gyr n offset = 
     (n |> toFloat) /10.0 + offset |> cos 
-
-type alias ImuData =
-    {  t : Int
-    , ax : Float
-    , ay : Float
-    , az : Float
-    , gx : Float
-    , gy : Float
-    , gz : Float
-    }
 
 generateImuData: Int -> List ImuData -> List ImuData
 generateImuData n list =
