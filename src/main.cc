@@ -9,7 +9,6 @@
 #include <seasocks/PrintfLogger.h>
 #include <seasocks/Server.h>
 #include <signal.h>
-
 // http://zguide.zeromq.org/cpp:interrupt
 static int s_interrupted = 0;
 static void s_signal_handler(int signal_value) { s_interrupted = 1; }
@@ -27,6 +26,7 @@ using namespace rxcpp;
 using namespace rxcpp::rxo;
 using namespace rxcpp::rxs;
 using namespace std::chrono;
+using namespace std::chrono_literals;
 
 constexpr auto LED = 12;
 
@@ -88,7 +88,8 @@ int main(int argc, const char *argv[]) {
   */
   rxsub::replay<nlohmann::json, decltype(mainthread)> setting_update(
       1, mainthread, lifetime);
-  auto setting_updates = setting_update.get_observable();
+  auto setting_updates =
+      setting_update.get_observable() | debounce(1s, mainthread);
   auto sendsettings = setting_update.get_subscriber();
   auto sf = settingsFile;
 
@@ -118,26 +119,16 @@ int main(int argc, const char *argv[]) {
   std::vector<observable<Reducer>> reducers;
 
   /* change the name of the robot */
-  auto namechanges = setting_updates |
+  reducers.push_back(setting_updates |
                      rxo::filter([](const nlohmann::json &settings) {
                        const bool valid = settings.contains("robot") &&
                                           settings["robot"].contains("name");
                        return valid;
                      }) |
                      rxo::map([](const nlohmann::json &settings) {
-                       const std::string robot_name = settings["robot"]["name"];
-                       return robot_name;
-                     }) |
-                     distinct_until_changed() | replay(1) | ref_count();
-
-  /* Store current name in the model
-      Take changes to the name and save the current name in the model.
-  */
-  reducers.push_back(namechanges | rxo::map([](std::string name) {
                        return Reducer([=](State &m) {
-                         m.name = name;
-                         m.settings["robot"]["name"] = name;
-                         //
+                         m.name = settings["robot"]["name"];
+                         m.settings["robot"]["name"] = m.name;
                          dispatchEffect([=]() {
                            fmt::print("in actions name is {0}\n", m.name);
                            // return updated settings to interface
@@ -155,9 +146,9 @@ int main(int argc, const char *argv[]) {
      because it prevents flooding the imu with restarting the whole time.
   */
   auto imuchanges = setting_updates | rxo::filter(&lsm9ds1::containsImuConfig) |
-                    debounce(milliseconds(1000), mainthread) |
                     distinct_until_changed() | replay(1) | ref_count();
 
+  // redo the imu-stream
   reducers.push_back(imuchanges |
                      rxo::map([=](const nlohmann::json &imu_settings) {
                        return createLSM9DS1Observable(imu_settings) |
@@ -168,6 +159,22 @@ int main(int argc, const char *argv[]) {
                               rxo::map([](auto &) { return noop; });
                      }) |
                      switch_on_next());
+
+  // update the model
+  reducers.push_back(
+      imuchanges | rxo::map([=](const nlohmann::json &new_settings) {
+        return Reducer([=](State &m) {
+          m.settings["robot"]["hardware"]["imu"] =
+              new_settings["robot"]["hardware"]["imu"];
+          dispatchEffect([=]() {
+            fmt::print("New imu configs are:\n{0}\n",
+                       m.settings["robot"]["hardware"]["imu"].dump());
+            // return updated settings to interface
+            std::cout.flush();
+          });
+          return std::move(m);
+        });
+      }));
 
   /**
    * Stream of effects. For now effects do not update the state.
