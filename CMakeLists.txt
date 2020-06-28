@@ -37,8 +37,8 @@ set(dependencies
 )
 
 #app
-add_executable(${PROJECT_NAME}_app src/main.cc)
-target_link_libraries(${PROJECT_NAME}_app ${dependencies})
+# add_executable(${PROJECT_NAME}_app src/main.cc)
+# target_link_libraries(${PROJECT_NAME}_app ${dependencies})
 
 #app
 add_executable(${PROJECT_NAME}_motor src/motor.cc)
@@ -81,7 +81,7 @@ set(configuration_files
 )
 
 set(targets
-  ${PROJECT_NAME}_app
+  # ${PROJECT_NAME}_app
   ${PROJECT_NAME}_simulate_app
 )
 

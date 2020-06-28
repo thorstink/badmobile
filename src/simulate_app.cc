@@ -1,4 +1,5 @@
 #include "cmd_vel_socket.hpp"
+#include "driving.cc"
 #include "imu_socket.hpp"
 #include "settings_socket.hpp"
 #include "state.h"
@@ -199,7 +200,11 @@ int main(int argc, const char *argv[]) {
   const auto settings_handle = std::make_shared<SettingsHandler>(
       send_settings_on_connection, update_settings);
 
-  const auto cmd_vel_handle = std::make_shared<CmdVelHandler>([] {});
+  const auto cmd_vel_handle =
+      std::make_shared<CmdVelHandler>([](const nlohmann::json &json_twist) {
+        auto wheels = jsonTwistToVector(json_twist);
+        std::cout << "wheelspeeds:" << wheels.transpose() << std::endl;
+      });
 
   // if settings/config is updated. Forward to everyone listening.
   states | rxo::map([](const State &m) { return m.settings; }) |

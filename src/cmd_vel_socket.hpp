@@ -10,9 +10,9 @@
 #include <seasocks/WebSocket.h>
 
 struct CmdVelHandler : seasocks::WebSocket::Handler {
-  CmdVelHandler(std::function<void()> x) : f(x){};
+  CmdVelHandler(std::function<void(const nlohmann::json &)> x) : f(x){};
   std::set<seasocks::WebSocket *> _cons;
-  std::function<void()> f;
+  std::function<void(const nlohmann::json &)> f;
 
   void onConnect(seasocks::WebSocket *con) override { _cons.insert(con); }
   void onDisconnect(seasocks::WebSocket *con) override { _cons.erase(con); }
@@ -26,7 +26,7 @@ struct CmdVelHandler : seasocks::WebSocket::Handler {
     r["linear_x"] = j.at("linear_x");
     r["angular_z"] = j.at("angular_z");
 
-    f();
+    f(r);
 
     send(r);
   }
